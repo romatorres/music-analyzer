@@ -10,8 +10,8 @@ import {
   Volume2,
   VolumeX,
   History,
-  BarChart3,
-  Plus,
+  CornerDownLeft,
+  Sparkles,
 } from "lucide-react";
 import type { LucideProps } from "lucide-react";
 import WaveSurfer from "wavesurfer.js";
@@ -25,6 +25,8 @@ import type { WaveformHandle } from "./components/WaveformVisualizer";
 import AnalysisHistory from "./components/AnalysisHistory";
 import ChordSlider from "./components/ChordSlider";
 import { Header } from "./components/Header";
+import { cn } from "./lib/utils";
+import { Slider } from "./components/ui/slider";
 
 interface Stem {
   name: string;
@@ -85,6 +87,8 @@ export default function MusicAnalyzer() {
   const [duration, setDuration] = useState(0);
   const [stemVolumes, setStemVolumes] = useState<StemVolumes>({});
   const [mutedStems, setMutedStems] = useState<MutedStems>({});
+  const [masterVolume, setMasterVolume] = useState<number>(1); // 0 to 1
+  const [isMasterMuted, setIsMasterMuted] = useState<boolean>(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [audioLoaded, setAudioLoaded] = useState(false);
   const [loadedFromHistory, setLoadedFromHistory] = useState<string | null>(
@@ -104,6 +108,22 @@ export default function MusicAnalyzer() {
   useEffect(() => {
     loadHistory();
   }, []);
+
+  useEffect(() => {
+    // Aplicar volume mestre e mudo a todos os stems quando eles são carregados ou estados mudam
+    if (stems.length > 0) {
+      Object.keys(audioRefs.current).forEach((stemName) => {
+        const audio = audioRefs.current[stemName];
+        if (audio) {
+          const currentStemVolume = stemVolumes[stemName] || 1;
+          const currentStemMuted = mutedStems[stemName] || false;
+
+          audio.muted = isMasterMuted || currentStemMuted;
+          audio.volume = audio.muted ? 0 : masterVolume * currentStemVolume;
+        }
+      });
+    }
+  }, [stems, masterVolume, isMasterMuted, stemVolumes, mutedStems]);
 
   const loadHistory = async () => {
     try {
@@ -354,6 +374,30 @@ export default function MusicAnalyzer() {
     });
   };
 
+  const handleMasterVolumeChange = (value: number) => {
+    setMasterVolume(value);
+    Object.keys(audioRefs.current).forEach((stemName) => {
+      const audio = audioRefs.current[stemName];
+      if (audio) {
+        audio.volume = isMasterMuted ? 0 : value * (stemVolumes[stemName] || 1);
+      }
+    });
+  };
+
+  const handleMasterMuteToggle = () => {
+    const newIsMasterMuted = !isMasterMuted;
+    setIsMasterMuted(newIsMasterMuted);
+    Object.keys(audioRefs.current).forEach((stemName) => {
+      const audio = audioRefs.current[stemName];
+      if (audio) {
+        audio.muted = newIsMasterMuted;
+        audio.volume = newIsMasterMuted
+          ? 0
+          : masterVolume * (stemVolumes[stemName] || 1);
+      }
+    });
+  };
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -412,18 +456,24 @@ export default function MusicAnalyzer() {
     (isPlaying: boolean) => {
       setPlaying(isPlaying);
       if (stems.length > 0) {
-        if (isPlaying) {
-          Object.values(audioRefs.current).forEach((audio) => {
-            if (audio) audio.play().catch((e) => console.error(e));
-          });
-        } else {
-          Object.values(audioRefs.current).forEach((audio) => {
-            if (audio) audio.pause();
-          });
-        }
+        Object.keys(audioRefs.current).forEach((stemName) => {
+          const audio = audioRefs.current[stemName];
+          if (audio) {
+            if (isPlaying) {
+              const currentStemVolume = stemVolumes[stemName] || 1;
+              const currentStemMuted = mutedStems[stemName] || false;
+
+              audio.muted = isMasterMuted || currentStemMuted;
+              audio.volume = audio.muted ? 0 : masterVolume * currentStemVolume;
+              audio.play().catch((e) => console.error(e));
+            } else {
+              audio.pause();
+            }
+          }
+        });
       }
     },
-    [stems.length]
+    [stems.length, isMasterMuted, masterVolume, stemVolumes, mutedStems]
   );
 
   const renderContent = () => {
@@ -471,39 +521,53 @@ export default function MusicAnalyzer() {
 
             {/* Controles do Player */}
             <div className="">
-              <div className="flex items-center gap-4 mb-4 justify-between">
-                <div className="flex justify-between text-sm text-gray-400 mb-2">
+              <div className="flex items-center justify-between gap-6 px-4 py-3">
+                <div className="font-mono text-sm text-muted-foreground min-w-[100px]">
                   <span className="text-primary">
                     {formatTime(currentTime)}
                   </span>
                   <span> / </span>
                   <span>{formatTime(duration)}</span>
                 </div>
-                <button
+                <Button
                   onClick={togglePlayPause}
                   disabled={!audioLoaded}
-                  className="bg-secondary hover:bg-secondary/50 disabled:bg-secondary-foreground p-4 rounded-full transition-colors"
+                  size="icon"
+                  className={cn(
+                    "h-12 w-12 rounded-full transition-all duration-300",
+                    "bg-gradient-to-br from-primary to-accent",
+                    "hover:shadow-[0_0_30px_hsl(var(--primary)/0.5)]",
+                    "hover:scale-105"
+                  )}
                 >
                   {playing ? (
-                    <Pause className="w-8 h-8" />
+                    <Pause className="h-6 w-6 text-primary-foreground" />
                   ) : (
-                    <Play className="w-8 h-8" />
+                    <Play className="h-6 w-6 text-primary-foreground ml-0.5" />
                   )}
-                </button>
-                <div>Vol</div>
-              </div>
-              <div>
-                {/* Botão de Análise Musical - só para arquivo local */}
-                {file && !loadedFromHistory && (
+                </Button>
+                {/* Volume Control */}
+                <div className="flex items-center gap-3 min-w-[150px]">
                   <Button
-                    onClick={handleAnalyze}
-                    disabled={analyzing || !file}
-                    variant={"default"}
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleMasterMuteToggle}
+                    className="text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
                   >
-                    <BarChart3 className="w-5 h-5" />
-                    {analyzing ? "Analisando..." : "Análise Musical"}
+                    {isMasterMuted || masterVolume === 0 ? (
+                      <VolumeX className="h-5 w-5" />
+                    ) : (
+                      <Volume2 className="h-5 w-5" />
+                    )}
                   </Button>
-                )}
+                  <Slider
+                    value={[isMasterMuted ? 0 : masterVolume]}
+                    onValueChange={(val) => handleMasterVolumeChange(val[0])}
+                    max={1}
+                    step={0.01}
+                    className="w-24"
+                  />
+                </div>
               </div>
 
               {/* Status de carregamento */}
@@ -530,6 +594,22 @@ export default function MusicAnalyzer() {
             )}
           </div>
         )}
+
+        <div className="flex items-center justify-center my-14">
+          {/* Botão de Análise Musical - só para arquivo local */}
+          {file && !loadedFromHistory && (
+            <Button
+              onClick={handleAnalyze}
+              disabled={analyzing || !file}
+              size="sm"
+              variant="outline"
+              className="gap-2 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/50 px-6 py-5"
+            >
+              <Sparkles className="h-4 w-4" />
+              {analyzing ? "Analisando..." : "Análise Musical"}
+            </Button>
+          )}
+        </div>
 
         {/* Stems Control - Só aparece após análise */}
         {stems.length > 0 && (
@@ -647,11 +727,10 @@ export default function MusicAnalyzer() {
         {/* Player and Controls */}
         {showPlayerView && (
           <div>
-            <div className="flex justify-end mb-4">
-              <Button onClick={resetToInitialView} variant={"outline"}>
-                <Plus className="w-4 h-4" />
-                Começar
-              </Button>
+            <div className="flex justify-start mb-4">
+              <button onClick={resetToInitialView}>
+                <CornerDownLeft className="w-8 h-8 text-primary/70 hover:text-primary transition duration-200 ease-in-out" />
+              </button>
             </div>
             {/* Progress Bar */}
             {progress && (

@@ -1,6 +1,6 @@
 // src/components/ProgressBar.tsx
 
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
 interface ProgressBarProps {
   percentage: number;
@@ -9,9 +9,14 @@ interface ProgressBarProps {
   totalSteps?: number;
 }
 
-export default function ProgressBar({ percentage, message, step, totalSteps }: ProgressBarProps) {
+export default function ProgressBar({
+  percentage,
+  message,
+  step,
+  totalSteps,
+}: ProgressBarProps) {
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+    <div className="glass-card rounded-lg p-4 text-center neon-border mb-8">
       <div className="flex items-center gap-3 mb-4">
         <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
         <h3 className="text-lg font-semibold">Processando...</h3>
@@ -21,7 +26,7 @@ export default function ProgressBar({ percentage, message, step, totalSteps }: P
           </span>
         )}
       </div>
-      
+
       <div className="mb-3">
         <div className="flex justify-between text-sm text-gray-300 mb-2">
           <span>{message}</span>
@@ -34,7 +39,7 @@ export default function ProgressBar({ percentage, message, step, totalSteps }: P
           />
         </div>
       </div>
-      
+
       <p className="text-xs text-gray-400 text-center">
         Este processo pode levar alguns minutos...
       </p>
