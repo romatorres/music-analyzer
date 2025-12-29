@@ -1,0 +1,156 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 6%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 18% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 18% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 185 100% 50%;
+    --primary-foreground: 220 20% 6%;
+
+    --secondary: 320 100% 60%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 270 100% 65%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 185 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* Custom colors */
+    --cyan: 185 100% 50%;
+    --magenta: 320 100% 60%;
+    --purple: 270 100% 65%;
+    --green: 150 100% 45%;
+    --orange: 30 100% 55%;
+    --yellow: 50 100% 50%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(var(--cyan)),
+      hsl(var(--purple))
+    );
+    --gradient-secondary: linear-gradient(
+      135deg,
+      hsl(var(--magenta)),
+      hsl(var(--orange))
+    );
+    --gradient-glow: radial-gradient(
+      ellipse at center,
+      hsl(var(--cyan) / 0.15),
+      transparent 70%
+    );
+
+    /* Shadows */
+    --shadow-glow-cyan: 0 0 30px hsl(var(--cyan) / 0.3);
+    --shadow-glow-magenta: 0 0 30px hsl(var(--magenta) / 0.3);
+    --shadow-card: 0 8px 32px hsl(220 20% 0% / 0.5);
+  }
+
+  .dark {
+    --background: 220 20% 6%;
+    --foreground: 210 40% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: "Inter", sans-serif;
+  }
+
+  .font-mono {
+    font-family: "JetBrains Mono", monospace;
+  }
+}
+
+@layer components {
+  .glow-text {
+    text-shadow: 0 0 20px hsl(var(--cyan) / 0.5),
+      0 0 40px hsl(var(--cyan) / 0.3);
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    box-shadow: var(--shadow-card);
+  }
+
+  .neon-border {
+    position: relative;
+  }
+
+  .neon-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--gradient-primary);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .neon-border:hover::before {
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 20px hsl(var(--cyan) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--cyan) / 0.5);
+    }
+  }
+
+  .animate-wave {
+    animation: wave 1.5s ease-in-out infinite;
+  }
+
+  @keyframes wave {
+    0%,
+    100% {
+      transform: scaleY(0.5);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+}
