@@ -585,15 +585,17 @@ export default function MusicAnalyzer() {
                 </div>
               )}
             </div>
-
-            {/* Chord Slider - Aparece quando há acordes */}
-            {chords.length > 0 && (
-              <div className="mt-6">
-                <ChordSlider chords={chords} currentTime={currentTime} />
-              </div>
-            )}
           </div>
         )}
+
+        <div>
+          {/* Chord Slider - Aparece quando há acordes */}
+          {chords.length > 0 && (
+            <div className="mt-6">
+              <ChordSlider chords={chords} currentTime={currentTime} />
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center justify-center my-14">
           {/* Botão de Análise Musical - só para arquivo local */}
