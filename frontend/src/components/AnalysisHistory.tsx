@@ -44,7 +44,7 @@ export default function AnalysisHistory({
   }
 
   return (
-    <div className="glass-card rounded-lg p-4 text-center neon-border">
+    <div className="glass-card rounded-lg p-4 text-center border-primary/50">
       <div className="flex items-center gap-2 mb-6">
         <History className="w-6 h-6 text-purple-400" />
         <h2 className="text-xl font-bold">Histórico de Análises</h2>
@@ -62,7 +62,7 @@ export default function AnalysisHistory({
           <div
             key={index}
             onClick={() => onSelectFile?.(item.filename)}
-            className="bg-white/5 rounded-lg p-4 border border-white/10 hover:bg-purple-500/20 hover:border-purple-500/50 transition-all cursor-pointer group"
+            className="glass-card rounded-lg p-4 text-center neon-border transition-all cursor-pointer group"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3 flex-1">

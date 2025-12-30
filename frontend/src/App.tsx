@@ -3,8 +3,6 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Music,
   Disc,
-  Radio,
-  Activity,
   Play,
   Pause,
   Volume2,
@@ -12,6 +10,9 @@ import {
   History,
   CornerDownLeft,
   Sparkles,
+  Mic,
+  Drum,
+  Guitar,
 } from "lucide-react";
 import type { LucideProps } from "lucide-react";
 import WaveSurfer from "wavesurfer.js";
@@ -406,9 +407,9 @@ export default function MusicAnalyzer() {
 
   const getStemIcon = (stemName: string) => {
     const icons: { [key: string]: React.ComponentType<LucideProps> } = {
-      vocals: Radio,
-      drums: Activity,
-      bass: Disc,
+      vocals: Mic,
+      drums: Drum,
+      bass: Guitar,
       other: Music,
     };
     return icons[stemName] || Music;
@@ -416,10 +417,10 @@ export default function MusicAnalyzer() {
 
   const getStemColor = (stemName: string): string => {
     const colors: { [key: string]: string } = {
-      vocals: "bg-purple-500",
+      vocals: "bg-purple",
       drums: "bg-red-500",
       bass: "bg-blue-500",
-      other: "bg-green-500",
+      other: "bg-green",
     };
     return colors[stemName] || "bg-gray-500";
   };
@@ -615,7 +616,7 @@ export default function MusicAnalyzer() {
 
         {/* Stems Control - Só aparece após análise */}
         {stems.length > 0 && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 border border-white/20">
+          <div className="glass-card rounded-lg p-6 text-center border-primary/50">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
               <Disc className="w-6 h-6" />
               Controle de Instrumentos ({stems.length} stems)
@@ -629,7 +630,7 @@ export default function MusicAnalyzer() {
                 return (
                   <div
                     key={stem.name}
-                    className="bg-white/5 rounded-xl p-4 border border-white/10"
+                    className="glass-card rounded-lg p-4 text-center neon-border"
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`${colorClass} p-2 rounded-lg`}>
