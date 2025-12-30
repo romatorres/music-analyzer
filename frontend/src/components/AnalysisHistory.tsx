@@ -1,5 +1,18 @@
 // src/components/AnalysisHistory.tsx
-import { History, Music, Clock, Disc } from "lucide-react";
+import { History, Music, Clock, Disc, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { toast } from "sonner";
 
 interface HistoryItem {
   filename: string;
@@ -12,12 +25,16 @@ interface HistoryItem {
 interface AnalysisHistoryProps {
   history: HistoryItem[];
   onSelectFile?: (filename: string) => void;
+  onDeleteFile?: (filename: string) => void;
 }
 
 export default function AnalysisHistory({
   history,
   onSelectFile,
+  onDeleteFile,
 }: AnalysisHistoryProps) {
+  const [deletingFile, setDeletingFile] = useState<string | null>(null);
+
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -32,6 +49,16 @@ export default function AnalysisHistory({
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleDelete = async (filename: string) => {
+    setDeletingFile(filename);
+    try {
+      await onDeleteFile?.(filename);
+      toast.success(`Análise de "${filename}" excluída com sucesso!`);
+    } finally {
+      setDeletingFile(null);
+    }
   };
 
   if (history.length === 0) {
@@ -62,14 +89,14 @@ export default function AnalysisHistory({
           <div
             key={index}
             onClick={() => onSelectFile?.(item.filename)}
-            className="glass-card rounded-lg p-4 text-center neon-border transition-all cursor-pointer group"
+            className="glass-card rounded-lg p-4 text-center neon-border transition-all cursor-pointer group hover:border-purple-400/50"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 <Music className="w-8 h-8 text-blue-400 group-hover:text-purple-400 transition-colors flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p
-                    className="font-semibold text-white truncate group-hover:text-purple-300 transition-colors"
+                    className="font-semibold text-white truncate group-hover:text-purple-300 transition-colors text-left"
                     title={item.filename}
                   >
                     {item.filename}
@@ -88,11 +115,56 @@ export default function AnalysisHistory({
                       <span>{formatTime(item.duration)}</span>
                     </div>
                   </div>
+                  <div className="text-xs text-gray-500 mt-1 text-left">
+                    {formatDate(item.timestamp)}
+                  </div>
                 </div>
               </div>
-              <div className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                {formatDate(item.timestamp)}
-              </div>
+
+              {/* Botão de deletar com Dialog */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={deletingFile === item.filename}
+                    className="flex-shrink-0 p-2 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Deletar análise e arquivos"
+                  >
+                    {deletingFile === item.filename ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-400"></div>
+                    ) : (
+                      <Trash2 className="w-5 h-5 text-destructive" />
+                    )}
+                  </button>
+                </DialogTrigger>
+                <DialogContent
+                  className="sm:max-w-[425px]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DialogHeader>
+                    <DialogTitle>Confirmar Exclusão</DialogTitle>
+                    <DialogDescription>
+                      Tem certeza que deseja deletar a análise do arquivo{" "}
+                      <span className="font-bold">{item.filename}</span>? Esta
+                      ação não pode ser desfeita.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancelar</Button>
+                    </DialogClose>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete(item.filename)}
+                      disabled={deletingFile === item.filename}
+                    >
+                      {deletingFile === item.filename
+                        ? "Deletando..."
+                        : "Deletar"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         ))}

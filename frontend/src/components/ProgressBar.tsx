@@ -34,7 +34,7 @@ export default function ProgressBar({
         </div>
         <div className="w-full bg-white/20 h-3 rounded-full overflow-hidden">
           <div
-            className="bg-gradient-to-r from-purple-500 to-pink-500 h-full transition-all duration-300 ease-out"
+            className="bg-gradient-to-r from-purple to-pink-500 h-full transition-all duration-300 ease-out"
             style={{ width: `${Math.max(0, Math.min(100, percentage))}%` }}
           />
         </div>
