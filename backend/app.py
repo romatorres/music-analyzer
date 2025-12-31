@@ -321,17 +321,35 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
             update_progress(task_id, -1, "Stems não foram gerados", 0)
             return
         
-        # Listar stems disponíveis
+        # Listar stems disponíveis (evitar duplicatas - priorizar WAV)
         stems_info = []
+        stem_names_added = set()
+        
+        # Primeiro, adicionar todos os WAV
         for stem_file in os.listdir(demucs_output):
-            if stem_file.endswith('.mp3') or stem_file.endswith('.wav'):
+            if stem_file.endswith('.wav'):
                 stem_name = Path(stem_file).stem
-                stems_info.append({
-                    'name': stem_name,
-                    'url': f'/api/download/{song_name}/{stem_name}'
-                })
+                if stem_name not in stem_names_added:
+                    stems_info.append({
+                        'name': stem_name,
+                        'url': f'/api/download/{song_name}/{stem_name}'
+                    })
+                    stem_names_added.add(stem_name)
+        
+        # Depois, adicionar MP3 apenas se não houver WAV correspondente
+        for stem_file in os.listdir(demucs_output):
+            if stem_file.endswith('.mp3'):
+                stem_name = Path(stem_file).stem
+                if stem_name not in stem_names_added:
+                    stems_info.append({
+                        'name': stem_name,
+                        'url': f'/api/download/{song_name}/{stem_name}'
+                    })
+                    stem_names_added.add(stem_name)
         
         update_progress(task_id, 4, f"Concluído! {len(stems_info)} stems criados", 100)
+        
+        print(f"Stems criados: {[s['name'] for s in stems_info]}")
         
         # Adicionar ao histórico
         y, sr = librosa.load(filepath, duration=10)
