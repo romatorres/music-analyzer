@@ -18,11 +18,13 @@ export interface WaveformHandle {
 interface WaveformVisualizerProps {
   audioUrl: string | null;
   isPlaying: boolean;
+  currentTime?: number; // Tempo atual para sincronizar quando há stems
   onReady: (duration: number) => void;
   onTimeUpdate: (currentTime: number) => void;
   onFinish: () => void;
   onPlaybackChange: (isPlaying: boolean) => void;
   wavesurferRef: React.MutableRefObject<WaveSurfer | null>;
+  hasSeparatedStems?: boolean; // Nova prop para indicar se há stems separados
 }
 
 export const WaveformVisualizer = forwardRef<
@@ -33,11 +35,13 @@ export const WaveformVisualizer = forwardRef<
     {
       audioUrl,
       isPlaying,
+      currentTime,
       onReady,
       onTimeUpdate,
       onFinish,
       onPlaybackChange,
       wavesurferRef,
+      hasSeparatedStems = false,
     },
     ref
   ) => {
@@ -70,6 +74,13 @@ export const WaveformVisualizer = forwardRef<
       const wavesurfer = wavesurferRef.current;
       if (!wavesurfer) return;
 
+      // Se há stems separados, não tocar o waveform (apenas visualizar)
+      if (hasSeparatedStems) {
+        console.log("[WaveformVisualizer] Stems separados ativos - waveform apenas para visualização");
+        onPlaybackChangeRef.current(true);
+        return;
+      }
+
       try {
         if (!wavesurfer.isPlaying()) {
           await wavesurfer.play();
@@ -79,7 +90,7 @@ export const WaveformVisualizer = forwardRef<
         console.error("[WaveformVisualizer] play failed:", error);
         onPlaybackChangeRef.current(false);
       }
-    }, [wavesurferRef]);
+    }, [wavesurferRef, hasSeparatedStems]);
 
     const pauseInternal = useCallback(() => {
       const wavesurfer = wavesurferRef.current;
@@ -147,7 +158,13 @@ export const WaveformVisualizer = forwardRef<
       wavesurfer.load(audioUrl);
 
       wavesurfer.on("ready", () => {
-        wavesurfer.setVolume(0.8);
+        // Se há stems separados, mutar o waveform (apenas visualização)
+        if (hasSeparatedStems) {
+          wavesurfer.setVolume(0);
+          console.log("[WaveformVisualizer] Waveform mutado - stems separados ativos");
+        } else {
+          wavesurfer.setVolume(0.8);
+        }
         setIsReady(true);
         onReadyRef.current(wavesurfer.getDuration());
         console.log("Waveform ready, duration:", wavesurfer.getDuration());
@@ -211,7 +228,22 @@ export const WaveformVisualizer = forwardRef<
         setIsReady(false);
         wavesurfer.destroy();
       };
-    }, [audioUrl, wavesurferRef]); // Incluindo wavesurferRef
+    }, [audioUrl, wavesurferRef, hasSeparatedStems]); // Adicionado hasSeparatedStems
+
+    // Sincronizar progresso visual quando há stems separados
+    useEffect(() => {
+      if (!hasSeparatedStems || currentTime === undefined) return;
+
+      const wavesurfer = wavesurferRef.current;
+      if (!wavesurfer || !isReady) return;
+
+      const duration = wavesurfer.getDuration();
+      if (!duration || duration <= 0) return;
+
+      // Atualizar posição visual sem tocar o áudio
+      const progress = currentTime / duration;
+      wavesurfer.seekTo(progress);
+    }, [currentTime, hasSeparatedStems, wavesurferRef, isReady]);
 
     return (
       <div className="relative w-full h-40">

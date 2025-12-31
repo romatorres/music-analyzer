@@ -52,6 +52,13 @@ export function StemsControl({
 
   if (stems.length === 0) return null;
 
+  // Debug: verificar se há stems duplicados
+  console.log("StemsControl - Total stems:", stems.length);
+  console.log(
+    "StemsControl - Stems:",
+    stems.map((s) => s.name)
+  );
+
   return (
     <div className="glass-card rounded-lg p-6 text-center border-primary/50">
       <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -60,13 +67,13 @@ export function StemsControl({
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {stems.map((stem) => {
+        {stems.map((stem, index) => {
           const Icon = getStemIcon(stem.name);
           const colorClass = getStemColor(stem.name);
 
           return (
             <div
-              key={stem.name}
+              key={`${stem.name}-${index}`}
               className="glass-card rounded-lg p-4 text-center neon-border"
             >
               <div className="flex items-center gap-3 mb-3">

@@ -17,6 +17,7 @@ interface MusicPlayerProps {
   isMasterMuted: boolean;
   visualizerRef: React.RefObject<WaveformHandle | null>;
   wavesurferRef: React.MutableRefObject<WaveSurfer | null>;
+  hasSeparatedStems: boolean; // Nova prop
   onVisualizerReady: (duration: number) => void;
   onVisualizerTimeUpdate: (time: number) => void;
   onVisualizerFinish: () => void;
@@ -38,6 +39,7 @@ export function MusicPlayer({
   isMasterMuted,
   visualizerRef,
   wavesurferRef,
+  hasSeparatedStems,
   onVisualizerReady,
   onVisualizerTimeUpdate,
   onVisualizerFinish,
@@ -77,6 +79,8 @@ export function MusicPlayer({
             wavesurferRef={wavesurferRef}
             audioUrl={audioUrlForVisualizer}
             isPlaying={playing}
+            currentTime={currentTime}
+            hasSeparatedStems={hasSeparatedStems}
             onReady={onVisualizerReady}
             onTimeUpdate={onVisualizerTimeUpdate}
             onFinish={onVisualizerFinish}

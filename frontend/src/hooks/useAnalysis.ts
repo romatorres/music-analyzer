@@ -100,15 +100,28 @@ export function useAnalysis(apiUrl: string) {
           pollProgress(data.task_id, (progressData) => {
             // Quando terminar, buscar os stems do progressData
             if (progressData.stems) {
+              // Remover duplicatas baseado no nome do stem
+              const uniqueStems = progressData.stems.filter(
+                (stem: Stem, index: number, self: Stem[]) =>
+                  index === self.findIndex((s) => s.name === stem.name)
+              );
+
+              console.log("Stems recebidos:", progressData.stems.length);
+              console.log("Stems únicos:", uniqueStems.length);
+              console.log(
+                "Stems:",
+                uniqueStems.map((s: Stem) => s.name)
+              );
+
               const volumes: StemVolumes = {};
               const mutes: MutedStems = {};
-              progressData.stems.forEach((stem: Stem) => {
+              uniqueStems.forEach((stem: Stem) => {
                 volumes[stem.name] = 1;
                 mutes[stem.name] = false;
               });
 
               callbacks.onSuccess({
-                stems: progressData.stems,
+                stems: uniqueStems,
                 volumes,
                 mutes,
               });

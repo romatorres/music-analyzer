@@ -52,19 +52,29 @@ export function useHistory(apiUrl: string) {
 
         const data: AnalysisResponse = await response.json();
 
-        const otherStem = data.stems?.find((s) => s.name === "other");
-        const audioForViz = otherStem || data.stems?.[0];
+        // Remover duplicatas de stems
+        const uniqueStems = data.stems?.filter(
+          (stem, index, self) =>
+            index === self.findIndex((s) => s.name === stem.name)
+        ) || [];
+
+        console.log("Stems carregados do histórico:", data.stems?.length || 0);
+        console.log("Stems únicos:", uniqueStems.length);
+        console.log("Stems:", uniqueStems.map((s) => s.name));
+
+        const otherStem = uniqueStems.find((s) => s.name === "other");
+        const audioForViz = otherStem || uniqueStems[0];
         const audioUrl = audioForViz ? `${apiUrl}${audioForViz.url}` : null;
 
         const volumes: StemVolumes = {};
         const mutes: MutedStems = {};
-        data.stems?.forEach((stem) => {
+        uniqueStems.forEach((stem) => {
           volumes[stem.name] = 1;
           mutes[stem.name] = false;
         });
 
         callbacks.onSuccess({
-          stems: data.stems || [],
+          stems: uniqueStems,
           chords: data.chords || [],
           volumes,
           mutes,

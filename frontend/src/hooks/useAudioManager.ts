@@ -1,5 +1,5 @@
 // src/hooks/useAudioManager.ts
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 
 interface AudioRefs {
   [key: string]: HTMLAudioElement | null;
@@ -13,13 +13,7 @@ interface MutedStems {
   [key: string]: boolean;
 }
 
-interface Stem {
-  name: string;
-  url: string;
-}
-
 export function useAudioManager(
-  stems: Stem[],
   masterVolume: number,
   isMasterMuted: boolean,
   stemVolumes: StemVolumes,
@@ -27,20 +21,59 @@ export function useAudioManager(
 ) {
   const audioRefs = useRef<AudioRefs>({});
 
+  // Limpar audioRefs quando o componente é desmontado
   useEffect(() => {
-    if (stems.length > 0) {
-      Object.keys(audioRefs.current).forEach((stemName) => {
-        const audio = audioRefs.current[stemName];
+    return () => {
+      console.log("[useAudioManager] Limpando todos os áudios");
+      Object.values(audioRefs.current).forEach((audio) => {
         if (audio) {
-          const currentStemVolume = stemVolumes[stemName] || 1;
-          const currentStemMuted = mutedStems[stemName] || false;
+          audio.pause();
+          audio.src = "";
+          audio.load();
+        }
+      });
+      audioRefs.current = {};
+    };
+  }, []);
 
-          audio.muted = isMasterMuted || currentStemMuted;
-          audio.volume = audio.muted ? 0 : masterVolume * currentStemVolume;
+  // Função para limpar refs de stems que não existem mais
+  const cleanupOldRefs = useCallback((currentStemNames: string[]) => {
+    const refsToRemove = Object.keys(audioRefs.current).filter(
+      (name) => !currentStemNames.includes(name)
+    );
+
+    if (refsToRemove.length > 0) {
+      console.log("[useAudioManager] Removendo refs antigos:", refsToRemove);
+      refsToRemove.forEach((name) => {
+        const audio = audioRefs.current[name];
+        if (audio) {
+          audio.pause();
+          audio.src = "";
+          audio.load();
+          delete audioRefs.current[name];
         }
       });
     }
-  }, [stems, masterVolume, isMasterMuted, stemVolumes, mutedStems]);
+  }, []);
+
+  // Update audio volumes and mute states whenever they change
+  useEffect(() => {
+    Object.keys(audioRefs.current).forEach((stemName) => {
+      const audio = audioRefs.current[stemName];
+      if (audio) {
+        const currentStemVolume = stemVolumes[stemName] ?? 1;
+        const currentStemMuted = mutedStems[stemName] ?? false;
+
+        // Set muted state
+        audio.muted = isMasterMuted || currentStemMuted;
+
+        // Set volume (only matters when not muted)
+        if (!audio.muted) {
+          audio.volume = masterVolume * currentStemVolume;
+        }
+      }
+    });
+  }, [masterVolume, isMasterMuted, stemVolumes, mutedStems]);
 
   const syncAudioTime = (time: number) => {
     Object.values(audioRefs.current).forEach((audio) => {
@@ -59,12 +92,18 @@ export function useAudioManager(
     Object.keys(audioRefs.current).forEach((stemName) => {
       const audio = audioRefs.current[stemName];
       if (audio) {
-        const currentStemVolume = stemVolumes[stemName] || 1;
-        const currentStemMuted = mutedStems[stemName] || false;
+        const currentStemVolume = stemVolumes[stemName] ?? 1;
+        const currentStemMuted = mutedStems[stemName] ?? false;
 
+        // Set muted state
         audio.muted = isMasterMuted || currentStemMuted;
-        audio.volume = audio.muted ? 0 : masterVolume * currentStemVolume;
-        audio.play().catch((e) => console.error(e));
+
+        // Set volume (only matters when not muted)
+        if (!audio.muted) {
+          audio.volume = masterVolume * currentStemVolume;
+        }
+
+        audio.play().catch((e) => console.error("Error playing stem:", e));
       }
     });
   };
@@ -87,5 +126,6 @@ export function useAudioManager(
     playAllStems,
     pauseAllStems,
     resetAllStems,
+    cleanupOldRefs,
   };
 }

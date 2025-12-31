@@ -57,13 +57,19 @@ export default function MusicAnalyzer() {
     playAllStems,
     pauseAllStems,
     resetAllStems,
+    cleanupOldRefs,
   } = useAudioManager(
-    stems,
     masterVolume,
     isMasterMuted,
     stemVolumes,
     mutedStems
   );
+
+  // Limpar refs antigos quando stems mudarem
+  useEffect(() => {
+    const currentStemNames = stems.map((s) => s.name);
+    cleanupOldRefs(currentStemNames);
+  }, [stems, cleanupOldRefs]);
 
   const { analyzing, progress, setProgress, separateStems, detectChords } =
     useAnalysis(API_URL);
@@ -354,6 +360,7 @@ export default function MusicAnalyzer() {
               isMasterMuted={isMasterMuted}
               visualizerRef={visualizerRef}
               wavesurferRef={wavesurferRef}
+              hasSeparatedStems={stems.length > 0}
               onVisualizerReady={handleVisualizerReady}
               onVisualizerTimeUpdate={handleVisualizerTimeUpdate}
               onVisualizerFinish={handleVisualizerFinish}
