@@ -2,14 +2,29 @@
 
 export interface Stem {
   name: string;
-  path?: string;
   url: string;
 }
 
 export interface Chord {
+  chord: string;
   start: number;
   end: number;
-  chord: string;
+}
+
+export interface StemVolumes {
+  [key: string]: number;
+}
+
+export interface MutedStems {
+  [key: string]: boolean;
+}
+
+export interface SoloStems {
+  [key: string]: boolean;
+}
+
+export interface AudioRefs {
+  [key: string]: HTMLAudioElement | null;
 }
 
 export interface AnalysisResponse {
@@ -30,18 +45,6 @@ export interface ProgressData {
   chords?: Chord[];
   processing_time?: number;
   stems_mode?: string;
-}
-
-export interface StemVolumes {
-  [key: string]: number;
-}
-
-export interface MutedStems {
-  [key: string]: boolean;
-}
-
-export interface AudioRefs {
-  [key: string]: HTMLAudioElement | null;
 }
 
 export interface HistoryItem {

@@ -13,11 +13,16 @@ interface MutedStems {
   [key: string]: boolean;
 }
 
+interface SoloStems {
+  [key: string]: boolean;
+}
+
 export function useAudioManager(
   masterVolume: number,
   isMasterMuted: boolean,
   stemVolumes: StemVolumes,
-  mutedStems: MutedStems
+  mutedStems: MutedStems,
+  soloStems: SoloStems
 ) {
   const audioRefs = useRef<AudioRefs>({});
 
@@ -56,24 +61,38 @@ export function useAudioManager(
     }
   }, []);
 
-  // Update audio volumes and mute states whenever they change
+  const getEffectiveVolume = useCallback(
+    (stemName: string) => {
+      const soloActive = Object.values(soloStems).some((isSolo) => isSolo);
+
+      if (soloActive && !soloStems[stemName]) {
+        return 0; // Se solo está ativo e este stem não é solo, volume é 0
+      }
+
+      const isStemActuallyMuted = isMasterMuted || mutedStems[stemName];
+      if (isStemActuallyMuted) {
+        return 0;
+      }
+
+      const stemVolume = stemVolumes[stemName] ?? 1;
+      return masterVolume * stemVolume;
+    },
+    [masterVolume, stemVolumes, mutedStems, soloStems, isMasterMuted]
+  );
+
+  // Update audio volumes whenever they change
   useEffect(() => {
     Object.keys(audioRefs.current).forEach((stemName) => {
       const audio = audioRefs.current[stemName];
       if (audio) {
-        const currentStemVolume = stemVolumes[stemName] ?? 1;
-        const currentStemMuted = mutedStems[stemName] ?? false;
-
-        // Set muted state
-        audio.muted = isMasterMuted || currentStemMuted;
-
-        // Set volume (only matters when not muted)
-        if (!audio.muted) {
-          audio.volume = masterVolume * currentStemVolume;
-        }
+        const effectiveVolume = getEffectiveVolume(stemName);
+        audio.volume = effectiveVolume;
+        // A propriedade 'muted' é menos flexível que setar o volume para 0.
+        // Gerenciar apenas pelo volume simplifica a lógica.
+        audio.muted = effectiveVolume === 0;
       }
     });
-  }, [masterVolume, isMasterMuted, stemVolumes, mutedStems]);
+  }, [getEffectiveVolume]);
 
   const syncAudioTime = (time: number) => {
     Object.values(audioRefs.current).forEach((audio) => {
@@ -83,25 +102,13 @@ export function useAudioManager(
     });
   };
 
-  const playAllStems = (
-    stemVolumes: StemVolumes,
-    mutedStems: MutedStems,
-    isMasterMuted: boolean,
-    masterVolume: number
-  ) => {
+  const playAllStems = () => {
     Object.keys(audioRefs.current).forEach((stemName) => {
       const audio = audioRefs.current[stemName];
       if (audio) {
-        const currentStemVolume = stemVolumes[stemName] ?? 1;
-        const currentStemMuted = mutedStems[stemName] ?? false;
-
-        // Set muted state
-        audio.muted = isMasterMuted || currentStemMuted;
-
-        // Set volume (only matters when not muted)
-        if (!audio.muted) {
-          audio.volume = masterVolume * currentStemVolume;
-        }
+        const effectiveVolume = getEffectiveVolume(stemName);
+        audio.volume = effectiveVolume;
+        audio.muted = effectiveVolume === 0;
 
         audio.play().catch((e) => console.error("Error playing stem:", e));
       }

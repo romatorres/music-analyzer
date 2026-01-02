@@ -14,13 +14,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 
-interface HistoryItem {
-  filename: string;
-  stems_count: number;
-  chords_count: number;
-  duration: number;
-  timestamp: string;
-}
+import type { HistoryItem } from "../types";
 
 interface AnalysisHistoryProps {
   history: HistoryItem[];

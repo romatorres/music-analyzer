@@ -21,7 +21,7 @@ import { useAnalysis } from "./hooks/useAnalysis";
 import { useHistory } from "./hooks/useHistory";
 
 // Types
-import type { Stem, Chord, StemVolumes, MutedStems } from "./types";
+import type { Stem, Chord, StemVolumes, MutedStems, SoloStems } from "./types";
 
 export default function MusicAnalyzer() {
   // Estados básicos
@@ -33,6 +33,7 @@ export default function MusicAnalyzer() {
   const [duration, setDuration] = useState(0);
   const [stemVolumes, setStemVolumes] = useState<StemVolumes>({});
   const [mutedStems, setMutedStems] = useState<MutedStems>({});
+  const [soloStems, setSoloStems] = useState<SoloStems>({});
   const [masterVolume, setMasterVolume] = useState<number>(1);
   const [isMasterMuted, setIsMasterMuted] = useState<boolean>(false);
   const [audioLoaded, setAudioLoaded] = useState(false);
@@ -65,7 +66,8 @@ export default function MusicAnalyzer() {
     masterVolume,
     isMasterMuted,
     stemVolumes,
-    mutedStems
+    mutedStems,
+    soloStems
   );
 
   // Limpar refs antigos quando stems mudarem
@@ -120,6 +122,7 @@ export default function MusicAnalyzer() {
     setDuration(0);
     setStemVolumes({});
     setMutedStems({});
+    setSoloStems({});
     setAudioLoaded(false);
     setLoadedFromHistory(null);
     setShowPlayerView(false);
@@ -137,6 +140,7 @@ export default function MusicAnalyzer() {
         setStems(newStems);
         setStemVolumes(volumes);
         setMutedStems(mutes);
+        setSoloStems({}); // Reset solo state on new separation
         loadHistory();
       },
       onError: () => {},
@@ -168,9 +172,10 @@ export default function MusicAnalyzer() {
         audioUrl,
       }) => {
         setStems(newStems);
-        setChords(newChords);
         setStemVolumes(volumes);
         setMutedStems(mutes);
+        setChords(newChords);
+        setSoloStems({});
         setAudioUrlForVisualizer(audioUrl);
         setLoadedFromHistory(filename);
         setFile(null);
@@ -232,22 +237,16 @@ export default function MusicAnalyzer() {
     setMutedStems((prev) => ({ ...prev, [stem]: !prev[stem] }));
   };
 
+  const handleToggleSolo = (stem: string) => {
+    setSoloStems((prev) => ({ ...prev, [stem]: !prev[stem] }));
+  };
+
   const handleMasterVolumeChange = (value: number) => {
     setMasterVolume(value);
   };
 
   const handleMasterMuteToggle = () => {
-    const newIsMasterMuted = !isMasterMuted;
-    setIsMasterMuted(newIsMasterMuted);
-    Object.keys(audioRefs.current).forEach((stemName) => {
-      const audio = audioRefs.current[stemName];
-      if (audio) {
-        audio.muted = newIsMasterMuted;
-        audio.volume = newIsMasterMuted
-          ? 0
-          : masterVolume * (stemVolumes[stemName] || 1);
-      }
-    });
+    setIsMasterMuted((prev) => !prev);
   };
 
   // Handlers do visualizador
@@ -277,21 +276,13 @@ export default function MusicAnalyzer() {
       setPlaying(isPlaying);
       if (stems.length > 0) {
         if (isPlaying) {
-          playAllStems(stemVolumes, mutedStems, isMasterMuted, masterVolume);
+          playAllStems();
         } else {
           pauseAllStems();
         }
       }
     },
-    [
-      stems.length,
-      stemVolumes,
-      mutedStems,
-      isMasterMuted,
-      masterVolume,
-      playAllStems,
-      pauseAllStems,
-    ]
+    [stems.length, playAllStems, pauseAllStems]
   );
 
   return (
@@ -393,7 +384,7 @@ export default function MusicAnalyzer() {
                 />
                 <Button
                   onClick={handleDetectChords}
-                  disabled={analyzing || !file || chords.length > 0}
+                  disabled={analyzing || chords.length > 0}
                   size="lg"
                   variant="outline"
                   className="gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
@@ -408,10 +399,12 @@ export default function MusicAnalyzer() {
               stems={stems}
               stemVolumes={stemVolumes}
               mutedStems={mutedStems}
+              soloStems={soloStems}
               apiUrl={API_URL}
               audioRefs={audioRefs}
               onVolumeChange={handleVolumeChange}
               onToggleMute={toggleMute}
+              onToggleSolo={handleToggleSolo}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
             />

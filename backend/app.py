@@ -120,15 +120,43 @@ def health_check():
     return jsonify({
         'status': 'ok',
         'message': 'Music Analyzer API está rodando!',
-        'engine': 'Demucs 4.0 (Otimizado)'
+        'engine': 'Demucs 4.0 (Otimizado)',
+        'active_tasks': len(progress_data)
+    })
+
+@app.route('/api/debug/tasks', methods=['GET'])
+def debug_tasks():
+    """Lista todas as tasks ativas (debug)"""
+    tasks_info = {}
+    for task_id, data in progress_data.items():
+        tasks_info[task_id] = {
+            'percentage': data.get('percentage', 0),
+            'message': data.get('message', ''),
+            'has_stems': 'stems' in data,
+            'stems_count': len(data.get('stems', []))
+        }
+    return jsonify({
+        'total_tasks': len(progress_data),
+        'tasks': tasks_info
     })
 
 @app.route('/api/progress/<task_id>', methods=['GET'])
 def get_progress(task_id):
     """Retorna o progresso de uma tarefa específica"""
-    if task_id in progress_data:
-        return jsonify(progress_data[task_id])
-    return jsonify({'error': 'Task not found'}), 404
+    try:
+        if task_id in progress_data:
+            data = progress_data[task_id].copy()
+            # Adicionar informação de debug
+            data['_debug'] = {
+                'has_stems': 'stems' in progress_data[task_id],
+                'keys': list(progress_data[task_id].keys()),
+                'stems_count': len(progress_data[task_id].get('stems', []))
+            }
+            return jsonify(data)
+        return jsonify({'error': 'Task not found', 'task_id': task_id}), 404
+    except Exception as e:
+        print(f"Erro ao buscar progresso: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/history', methods=['GET'])
 def get_history():
@@ -302,7 +330,10 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         stderr_output = []
         stdout_output = []
         last_progress = 20
+        max_wait_after_100 = 10  # Esperar no máximo 10 segundos após 100%
+        time_at_100 = None
         
+        print("Monitorando progresso do Demucs...")
         while True:
             # Ler stderr (onde o Demucs mostra progresso)
             stderr_line = process.stderr.readline() if process.stderr else None
@@ -320,17 +351,47 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
                             if our_percent > last_progress:
                                 last_progress = our_percent
                                 update_progress(task_id, 3, f"Processando: {demucs_percent}%", our_percent)
-                    except:
-                        pass
+                            
+                            # Marcar quando chegou a 100%
+                            if demucs_percent >= 100 and time_at_100 is None:
+                                time_at_100 = time.time()
+                                print("Demucs chegou a 100%, aguardando finalização...")
+                    except Exception as e:
+                        print(f"Erro ao parsear progresso: {e}")
             
             # Verificar se processo terminou
-            if process.poll() is not None:
+            poll_result = process.poll()
+            if poll_result is not None:
+                print(f"Processo Demucs terminou com código: {poll_result}")
                 # Ler qualquer saída restante
                 if process.stdout:
-                    stdout_output.extend(process.stdout.readlines())
+                    remaining_stdout = process.stdout.readlines()
+                    stdout_output.extend(remaining_stdout)
+                    print(f"Stdout restante: {len(remaining_stdout)} linhas")
                 if process.stderr:
-                    stderr_output.extend(process.stderr.readlines())
+                    remaining_stderr = process.stderr.readlines()
+                    stderr_output.extend(remaining_stderr)
+                    print(f"Stderr restante: {len(remaining_stderr)} linhas")
                 break
+            
+            # Timeout: se chegou a 100% há mais de X segundos, forçar saída
+            if time_at_100 is not None:
+                elapsed_since_100 = time.time() - time_at_100
+                if elapsed_since_100 > max_wait_after_100:
+                    print(f"TIMEOUT: Processo não finalizou após {max_wait_after_100}s em 100%")
+                    print("Forçando continuação...")
+                    # Tentar terminar o processo
+                    try:
+                        process.terminate()
+                        time.sleep(1)
+                        if process.poll() is None:
+                            process.kill()
+                    except:
+                        pass
+                    break
+            
+            # Pequeno delay para não sobrecarregar CPU
+            time.sleep(0.1)
         
         elapsed_time = time.time() - start_time
         result_code = process.returncode
@@ -348,6 +409,10 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
             return
         
         update_progress(task_id, 3, "Processando stems gerados...", 80)
+        print("=" * 60)
+        print("ETAPA 1: Localizando diretório de stems...")
+        import sys
+        sys.stdout.flush()  # Forçar saída imediata
         
         # Localizar stems gerados - verificar ambos os modelos
         demucs_output = None
@@ -355,22 +420,33 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         
         # Tentar htdemucs_ft primeiro (modo rápido/balanceado)
         demucs_output_ft = os.path.join(STEMS_FOLDER, 'htdemucs_ft', song_name)
+        print(f"  Verificando: {demucs_output_ft}")
         if os.path.exists(demucs_output_ft):
             demucs_output = demucs_output_ft
             model_used = 'htdemucs_ft'
+            print(f"  ✓ Encontrado!")
         else:
+            print(f"  ✗ Não encontrado")
             # Tentar htdemucs (modo qualidade)
             demucs_output_std = os.path.join(STEMS_FOLDER, 'htdemucs', song_name)
+            print(f"  Verificando: {demucs_output_std}")
             if os.path.exists(demucs_output_std):
                 demucs_output = demucs_output_std
                 model_used = 'htdemucs'
+                print(f"  ✓ Encontrado!")
+            else:
+                print(f"  ✗ Não encontrado")
         
-        print(f"Procurando stems em: {demucs_output} (modelo: {model_used})")
+        print(f"\nDiretório final: {demucs_output} (modelo: {model_used})")
         
         if not demucs_output or not os.path.exists(demucs_output):
-            print(f"Diretório não existe")
+            print(f"ERRO: Diretório não existe!")
             update_progress(task_id, -1, "Stems não foram gerados", 0)
             return
+        
+        print("\nETAPA 2: Listando arquivos de stems...")
+        all_files = os.listdir(demucs_output)
+        print(f"  Arquivos encontrados: {all_files}")
         
         # Listar stems disponíveis (evitar duplicatas - priorizar WAV)
         stems_info = []
@@ -386,11 +462,13 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
             "no_vocals": "Instrumental"
         }
         
+        print("\nETAPA 3: Processando arquivos WAV...")
         # Primeiro, adicionar todos os WAV
-        for stem_file in os.listdir(demucs_output):
+        for stem_file in all_files:
             if stem_file.endswith('.wav'):
                 stem_name = Path(stem_file).stem
                 translated_name = stem_translations.get(stem_name, stem_name)
+                print(f"  WAV: {stem_file} → {translated_name}")
                 if stem_name not in stem_names_added:
                     stems_info.append({
                         'name': translated_name,
@@ -398,39 +476,68 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
                     })
                     stem_names_added.add(stem_name)
         
+        print("\nETAPA 4: Processando arquivos MP3...")
         # Depois, adicionar MP3 apenas se não houver WAV correspondente
-        for stem_file in os.listdir(demucs_output):
+        for stem_file in all_files:
             if stem_file.endswith('.mp3'):
                 stem_name = Path(stem_file).stem
                 translated_name = stem_translations.get(stem_name, stem_name)
                 if stem_name not in stem_names_added:
+                    print(f"  MP3: {stem_file} → {translated_name}")
                     stems_info.append({
                         'name': translated_name,
                         'url': f'/api/download/{song_name}/{stem_name}'
                     })
                     stem_names_added.add(stem_name)
+                else:
+                    print(f"  MP3: {stem_file} → IGNORADO (já existe WAV)")
         
+        print(f"\nETAPA 5: Atualizando progresso para 100%...")
         update_progress(task_id, 4, f"Concluído! {len(stems_info)} stems criados", 100)
+        print(f"  ✓ Progresso atualizado!")
         
-        print(f"Stems criados: {[s['name'] for s in stems_info]}")
+        print(f"\nStems finais: {[s['name'] for s in stems_info]}")
         
+        print("\nETAPA 6: Obtendo duração do áudio...")
         # Adicionar ao histórico
-        y, sr = librosa.load(filepath, duration=10)
-        duration = len(y) / sr
+        try:
+            y, sr = librosa.load(filepath, duration=10)
+            duration = len(y) / sr
+            print(f"  ✓ Duração: {duration:.2f}s")
+        except Exception as e:
+            print(f"  ✗ Erro: {e}")
+            duration = 0
+        
+        print("\nETAPA 7: Adicionando ao histórico...")
         add_to_history(filename, len(stems_info), 0, duration, stems_info, None)
+        print(f"  ✓ Histórico atualizado!")
         
+        print("\nETAPA 8: Salvando resultado no progress_data...")
         # Salvar resultado no progress_data para o frontend buscar
-        progress_data[task_id]['stems'] = stems_info
-        progress_data[task_id]['processing_time'] = elapsed_time
-        progress_data[task_id]['stems_mode'] = stems_mode
-        progress_data[task_id]['quality_mode'] = quality_mode
-        progress_data[task_id]['model_used'] = model_used
+        try:
+            progress_data[task_id]['stems'] = stems_info
+            progress_data[task_id]['processing_time'] = elapsed_time
+            progress_data[task_id]['stems_mode'] = stems_mode
+            progress_data[task_id]['quality_mode'] = quality_mode
+            progress_data[task_id]['model_used'] = model_used
+            print("  ✓ Dados salvos no progress_data!")
+        except Exception as e:
+            print(f"  ✗ Erro ao salvar: {e}")
         
-        print(f"✓ Separação concluída em {elapsed_time:.1f}s")
-        print(f"  Stems: {len(stems_info)} | Modo: {stems_mode} | Qualidade: {quality_mode}")
+        print(f"\n{'='*60}")
+        print(f"✓ SEPARAÇÃO CONCLUÍDA COM SUCESSO!")
+        print(f"  Tempo: {elapsed_time:.1f}s")
+        print(f"  Stems: {len(stems_info)}")
+        print(f"  Modo: {stems_mode} stems")
+        print(f"  Qualidade: {quality_mode}")
+        print(f"  Modelo: {model_used}")
+        print(f"{'='*60}\n")
         
     except Exception as e:
-        print(f"Erro na separação: {str(e)}")
+        print(f"\n{'='*60}")
+        print(f"✗ ERRO NA SEPARAÇÃO!")
+        print(f"  Erro: {str(e)}")
+        print(f"{'='*60}\n")
         import traceback
         traceback.print_exc()
         update_progress(task_id, -1, f"Erro: {str(e)}", 0)

@@ -1,11 +1,7 @@
 // src/components/ChordSlider.tsx
 import { useEffect, useRef } from "react";
 
-interface Chord {
-  start: number;
-  end: number;
-  chord: string;
-}
+import type { Chord } from "../types";
 
 interface ChordSliderProps {
   chords: Chord[];
