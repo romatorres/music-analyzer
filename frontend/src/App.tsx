@@ -1,6 +1,7 @@
 // src/App.tsx
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CornerDownLeft } from "lucide-react";
+import { CornerDownLeft, BarChart3 } from "lucide-react";
+import { Button } from "./components/ui/button";
 import type WaveSurfer from "wavesurfer.js";
 
 // Componentes
@@ -11,8 +12,7 @@ import AnalysisHistory from "./components/AnalysisHistory";
 import ChordSlider from "./components/ChordSlider";
 import { Header } from "./components/Header";
 import { MusicPlayer } from "./components/MusicPlayer";
-import { StemsModeSelector } from "./components/StemsModeSelector";
-import { AnalysisButtons } from "./components/AnalysisButtons";
+import { SeparationSettings } from "./components/SeparationSettings";
 import { StemsControl } from "./components/StemsControl";
 
 // Hooks
@@ -43,7 +43,10 @@ export default function MusicAnalyzer() {
   const [audioUrlForVisualizer, setAudioUrlForVisualizer] = useState<
     string | null
   >(null);
-  const [stemsMode, setStemsMode] = useState<"2" | "4">("2");
+  const [stemsMode, setStemsMode] = useState<"2" | "4">("4");
+  const [quality, setQuality] = useState<"fast" | "balanced" | "quality">(
+    "balanced"
+  );
 
   // Refs
   const visualizerRef = useRef<WaveformHandle | null>(null);
@@ -126,10 +129,10 @@ export default function MusicAnalyzer() {
   };
 
   // Handlers de análise
-  const handleSeparateStems = (qualityMode: 'fast' | 'balanced' | 'quality') => {
+  const handleSeparateStems = () => {
     if (!file) return;
 
-    separateStems(file, stemsMode, qualityMode, {
+    separateStems(file, stemsMode, quality, {
       onSuccess: ({ stems: newStems, volumes, mutes }) => {
         setStems(newStems);
         setStemVolumes(volumes);
@@ -378,19 +381,26 @@ export default function MusicAnalyzer() {
             )}
 
             {file && !loadedFromHistory && (
-              <div className="flex flex-col items-center gap-4 my-8">
-                <StemsModeSelector
+              <div className="flex flex-col items-center gap-6 my-8">
+                <SeparationSettings
                   stemsMode={stemsMode}
-                  onModeChange={setStemsMode}
+                  onStemsModeChange={setStemsMode}
+                  quality={quality}
+                  onQualityChange={setQuality}
+                  onSeparate={handleSeparateStems}
+                  isSeparating={analyzing}
+                  disabled={analyzing}
                 />
-                <AnalysisButtons
-                  analyzing={analyzing}
-                  hasFile={!!file}
-                  hasStem={stems.length > 0}
-                  hasChords={chords.length > 0}
-                  onSeparateStems={handleSeparateStems}
-                  onDetectChords={handleDetectChords}
-                />
+                <Button
+                  onClick={handleDetectChords}
+                  disabled={analyzing || !file || chords.length > 0}
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
+                >
+                  <BarChart3 className="h-5 w-5" />
+                  {analyzing ? "Detectando..." : "Detectar Acordes"}
+                </Button>
               </div>
             )}
 
