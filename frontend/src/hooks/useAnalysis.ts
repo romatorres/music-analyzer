@@ -14,7 +14,11 @@ export function useAnalysis(apiUrl: string) {
   const [progress, setProgress] = useState<ProgressData | null>(null);
 
   const pollProgress = useCallback(
-    async (taskId: string, onComplete?: (data: ProgressData) => void) => {
+    async (
+      taskId: string,
+      onSuccess?: (data: ProgressData) => void,
+      onError?: () => void
+    ) => {
       let consecutiveErrors = 0;
       const maxErrors = 5;
 
@@ -29,9 +33,10 @@ export function useAnalysis(apiUrl: string) {
             if (progressData.percentage >= 100 || progressData.step === -1) {
               clearInterval(pollInterval);
 
-              // Chamar callback com os dados completos se disponível
-              if (progressData.percentage >= 100 && onComplete) {
-                onComplete(progressData);
+              if (progressData.percentage >= 100 && onSuccess) {
+                onSuccess(progressData);
+              } else if (onError) {
+                onError();
               }
 
               if (progressData.step !== -1) {
@@ -43,6 +48,7 @@ export function useAnalysis(apiUrl: string) {
             if (consecutiveErrors >= maxErrors) {
               console.error("Muitos erros consecutivos ao buscar progresso");
               clearInterval(pollInterval);
+              if (onError) onError();
             }
           }
         } catch (error) {
@@ -50,9 +56,10 @@ export function useAnalysis(apiUrl: string) {
           console.error("Erro ao buscar progresso:", error);
           if (consecutiveErrors >= maxErrors) {
             clearInterval(pollInterval);
+            if (onError) onError();
           }
         }
-      }, 300); // Polling a cada 300ms
+      }, 300);
 
       return pollInterval;
     },
@@ -63,6 +70,7 @@ export function useAnalysis(apiUrl: string) {
     async (
       file: File,
       stemsMode: "2" | "4",
+      qualityMode: "fast" | "balanced" | "quality",
       callbacks: {
         onSuccess: (data: {
           stems: Stem[];
@@ -84,6 +92,7 @@ export function useAnalysis(apiUrl: string) {
       const formData = new FormData();
       formData.append("audio", file);
       formData.append("stems_mode", stemsMode);
+      formData.append("quality_mode", qualityMode);
 
       try {
         const response = await fetch(`${apiUrl}/api/separate`, {
@@ -97,36 +106,44 @@ export function useAnalysis(apiUrl: string) {
 
         if (data.task_id) {
           // Iniciar polling e aguardar conclusão
-          pollProgress(data.task_id, (progressData) => {
-            // Quando terminar, buscar os stems do progressData
-            if (progressData.stems) {
-              // Remover duplicatas baseado no nome do stem
-              const uniqueStems = progressData.stems.filter(
-                (stem: Stem, index: number, self: Stem[]) =>
-                  index === self.findIndex((s) => s.name === stem.name)
-              );
+          pollProgress(
+            data.task_id,
+            (progressData) => {
+              // Quando terminar, buscar os stems do progressData
+              if (progressData.stems) {
+                // Remover duplicatas baseado no nome do stem
+                const uniqueStems = progressData.stems.filter(
+                  (stem: Stem, index: number, self: Stem[]) =>
+                    index === self.findIndex((s) => s.name === stem.name)
+                );
 
-              console.log("Stems recebidos:", progressData.stems.length);
-              console.log("Stems únicos:", uniqueStems.length);
-              console.log(
-                "Stems:",
-                uniqueStems.map((s: Stem) => s.name)
-              );
+                const volumes: StemVolumes = {};
+                const mutes: MutedStems = {};
+                uniqueStems.forEach((stem: Stem) => {
+                  volumes[stem.name] = 1;
+                  mutes[stem.name] = false;
+                });
 
-              const volumes: StemVolumes = {};
-              const mutes: MutedStems = {};
-              uniqueStems.forEach((stem: Stem) => {
-                volumes[stem.name] = 1;
-                mutes[stem.name] = false;
-              });
-
-              callbacks.onSuccess({
-                stems: uniqueStems,
-                volumes,
-                mutes,
-              });
+                callbacks.onSuccess({
+                  stems: uniqueStems,
+                  volumes,
+                  mutes,
+                });
+              }
+              // Chama os callbacks de finalização aqui, após o sucesso
+              setAnalyzing(false);
+              callbacks.onComplete();
+            },
+            () => {
+              callbacks.onError();
+              setAnalyzing(false);
+              callbacks.onComplete();
             }
-          });
+          );
+        } else {
+          // Se não houver task_id, finalize imediatamente
+          setAnalyzing(false);
+          callbacks.onComplete();
         }
       } catch (error) {
         console.error("Erro:", error);
@@ -138,7 +155,7 @@ export function useAnalysis(apiUrl: string) {
         });
         setTimeout(() => setProgress(null), 5000);
         callbacks.onError();
-      } finally {
+        // Garante a finalização em caso de erro na requisição inicial
         setAnalyzing(false);
         callbacks.onComplete();
       }
@@ -176,11 +193,21 @@ export function useAnalysis(apiUrl: string) {
 
         const data: AnalysisResponse = await response.json();
 
-        if (data.task_id) {
-          pollProgress(data.task_id);
-        }
+        // Backend retorna acordes diretamente na resposta
+        if (data.chords && data.chords.length > 0) {
+          console.log("Acordes detectados:", data.chords.length);
+          callbacks.onSuccess(data.chords);
 
-        callbacks.onSuccess(data.chords || []);
+          // Fazer polling apenas para atualizar o progresso visual
+          if (data.task_id) {
+            pollProgress(data.task_id, undefined, undefined);
+          }
+
+          setAnalyzing(false);
+          callbacks.onComplete();
+        } else {
+          throw new Error("Nenhum acorde detectado");
+        }
       } catch (error) {
         console.error("Erro:", error);
         setProgress({
@@ -192,7 +219,6 @@ export function useAnalysis(apiUrl: string) {
         });
         setTimeout(() => setProgress(null), 5000);
         callbacks.onError();
-      } finally {
         setAnalyzing(false);
         callbacks.onComplete();
       }

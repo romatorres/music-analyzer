@@ -166,8 +166,9 @@ export const WaveformVisualizer = forwardRef<
           wavesurfer.setVolume(0.8);
         }
         setIsReady(true);
-        onReadyRef.current(wavesurfer.getDuration());
-        console.log("Waveform ready, duration:", wavesurfer.getDuration());
+        const duration = wavesurfer.getDuration();
+        console.log("[WaveformVisualizer] Waveform ready, duration:", duration);
+        onReadyRef.current(duration);
       });
 
       wavesurfer.on("error", (error) => {

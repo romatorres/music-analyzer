@@ -126,10 +126,10 @@ export default function MusicAnalyzer() {
   };
 
   // Handlers de análise
-  const handleSeparateStems = () => {
+  const handleSeparateStems = (qualityMode: 'fast' | 'balanced' | 'quality') => {
     if (!file) return;
 
-    separateStems(file, stemsMode, {
+    separateStems(file, stemsMode, qualityMode, {
       onSuccess: ({ stems: newStems, volumes, mutes }) => {
         setStems(newStems);
         setStemVolumes(volumes);
@@ -249,6 +249,7 @@ export default function MusicAnalyzer() {
 
   // Handlers do visualizador
   const handleVisualizerReady = useCallback((dur: number) => {
+    console.log("[App] Visualizer ready, duration:", dur);
     setDuration(dur);
     setAudioLoaded(true);
   }, []);

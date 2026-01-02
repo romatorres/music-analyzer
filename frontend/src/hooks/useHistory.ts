@@ -61,10 +61,21 @@ export function useHistory(apiUrl: string) {
         console.log("Stems carregados do histórico:", data.stems?.length || 0);
         console.log("Stems únicos:", uniqueStems.length);
         console.log("Stems:", uniqueStems.map((s) => s.name));
+        console.log("Acordes:", data.chords?.length || 0);
 
-        const otherStem = uniqueStems.find((s) => s.name === "other");
-        const audioForViz = otherStem || uniqueStems[0];
-        const audioUrl = audioForViz ? `${apiUrl}${audioForViz.url}` : null;
+        // Determinar URL do áudio para o visualizador
+        let audioUrl: string | null = null;
+
+        if (uniqueStems.length > 0) {
+          // Se há stems, usar o stem "other" ou o primeiro disponível
+          const otherStem = uniqueStems.find((s) => s.name === "other");
+          const audioForViz = otherStem || uniqueStems[0];
+          audioUrl = `${apiUrl}${audioForViz.url}`;
+        } else {
+          // Se não há stems, usar o arquivo original do upload
+          audioUrl = `${apiUrl}/uploads/${encodeURIComponent(filename)}`;
+          console.log("Usando arquivo original:", audioUrl);
+        }
 
         const volumes: StemVolumes = {};
         const mutes: MutedStems = {};

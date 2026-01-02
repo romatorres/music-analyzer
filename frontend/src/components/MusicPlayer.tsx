@@ -107,13 +107,6 @@ export function MusicPlayer({
             Carregando áudio...
           </div>
         )}
-
-        {loadedFromHistory && !hasSeparatedStems && (
-          <div className="text-center text-sm text-gray-400 mb-4 flex items-center justify-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-            Carregando stems...
-          </div>
-        )}
       </div>
     </div>
   );

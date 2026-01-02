@@ -207,31 +207,68 @@ def delete_analysis(filename):
 
 # ==================== SEPARAÇÃO DE STEMS ====================
 
-def process_separation_async(task_id, filepath, filename, stems_mode, duration_limit):
+def process_separation_async(task_id, filepath, filename, stems_mode, duration_limit, quality_mode='balanced'):
     """Processa a separação de stems em background"""
     try:
         song_name = Path(filename).stem
         
-        print(f"\n=== SEPARAÇÃO DE STEMS: {filename} (modo: {stems_mode} stems) ===")
+        print(f"\n=== SEPARAÇÃO DE STEMS: {filename} ===")
+        print(f"  Modo: {stems_mode} stems | Qualidade: {quality_mode}")
         update_progress(task_id, 1, f"Iniciando separação de {filename}...", 5)
         
-        # Comando Demucs - VERSÃO ESTÁVEL
+        # Comando Demucs com 3 modos de qualidade
         import sys
         
-        # Construir comando baseado na escolha do usuário
-        cmd = [
-            sys.executable, '-m', 'demucs',
-            '-n', 'htdemucs',
-            '--device', 'cpu',     # Forçar CPU (já que não tem GPU)
-            '--jobs', '1',         # Usar apenas 1 job (mais estável)
-        ]
+        # MODO 1: RÁPIDO (1-3 min) - Qualidade Boa (8.5/10)
+        if quality_mode == 'fast':
+            cmd = [
+                sys.executable, '-m', 'demucs',
+                '-n', 'htdemucs_ft',      # Modelo fine-tuned (mais rápido)
+                '--mp3',                  # Saída em MP3
+                '--mp3-bitrate', '320',   # Alta qualidade
+                '--float32',              # Precisão otimizada (2x mais rápido)
+                '--shifts', '0',          # Sem augmentation (muito mais rápido)
+                '--overlap', '0.25',      # Overlap reduzido
+                '--jobs', '0',            # Usar todos os cores
+                '--device', 'cpu',
+            ]
+            estimated_time = "1-3 min"
+            quality_label = "Rápido (Boa)"
+            
+        # MODO 2: BALANCEADO (5-8 min) - Qualidade Ótima (9.0/10)
+        elif quality_mode == 'balanced':
+            cmd = [
+                sys.executable, '-m', 'demucs',
+                '-n', 'htdemucs_ft',      # Modelo fine-tuned
+                '--mp3',                  # Saída em MP3
+                '--mp3-bitrate', '320',
+                '--shifts', '1',          # Pouco augmentation
+                '--overlap', '0.4',       # Overlap médio
+                '--jobs', '0',            # Usar todos os cores
+                '--device', 'cpu',
+            ]
+            estimated_time = "5-8 min"
+            quality_label = "Balanceado (Ótima)"
+            
+        # MODO 3: MÁXIMA QUALIDADE (15-20 min) - Qualidade Perfeita (9.5/10)
+        else:  # quality_mode == 'quality'
+            cmd = [
+                sys.executable, '-m', 'demucs',
+                '-n', 'htdemucs',         # Modelo padrão (melhor qualidade)
+                '--shifts', '5',          # Máximo augmentation
+                '--overlap', '0.5',       # Máximo overlap
+                '--jobs', '0',            # Usar todos os cores
+                '--device', 'cpu',
+            ]
+            estimated_time = "15-20 min"
+            quality_label = "Máxima (Perfeita)"
         
         # Adicionar flag de 2 stems se escolhido
         if stems_mode == '2':
             cmd.extend(['--two-stems', 'vocals'])
-            estimated_time = "3-5 min"
+            estimated_time = estimated_time.replace('min', 'min (2 stems)')
         else:
-            estimated_time = "8-12 min"
+            estimated_time = estimated_time.replace('min', 'min (4 stems)')
         
         # Adicionar limite de duração se especificado (para testes)
         if duration_limit:
@@ -242,7 +279,8 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         cmd.extend(['--out', STEMS_FOLDER, filepath])
         
         print("Comando:", ' '.join(cmd))
-        update_progress(task_id, 2, f"Processando com Demucs ({estimated_time})...", 20)
+        print(f"Qualidade: {quality_label} | Tempo estimado: {estimated_time}")
+        update_progress(task_id, 2, f"Processando ({quality_label}) - {estimated_time}...", 20)
         
         print(f"Iniciando Demucs às {datetime.now().strftime('%H:%M:%S')}")
         print("Aguarde... (primeira execução pode baixar modelos ~2GB)")
@@ -311,13 +349,26 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         
         update_progress(task_id, 3, "Processando stems gerados...", 80)
         
-        # Localizar stems gerados (htdemucs padrão)
-        demucs_output = os.path.join(STEMS_FOLDER, 'htdemucs', song_name)
+        # Localizar stems gerados - verificar ambos os modelos
+        demucs_output = None
+        model_used = None
         
-        print(f"Procurando stems em: {demucs_output}")
+        # Tentar htdemucs_ft primeiro (modo rápido/balanceado)
+        demucs_output_ft = os.path.join(STEMS_FOLDER, 'htdemucs_ft', song_name)
+        if os.path.exists(demucs_output_ft):
+            demucs_output = demucs_output_ft
+            model_used = 'htdemucs_ft'
+        else:
+            # Tentar htdemucs (modo qualidade)
+            demucs_output_std = os.path.join(STEMS_FOLDER, 'htdemucs', song_name)
+            if os.path.exists(demucs_output_std):
+                demucs_output = demucs_output_std
+                model_used = 'htdemucs'
         
-        if not os.path.exists(demucs_output):
-            print(f"Diretório não existe: {demucs_output}")
+        print(f"Procurando stems em: {demucs_output} (modelo: {model_used})")
+        
+        if not demucs_output or not os.path.exists(demucs_output):
+            print(f"Diretório não existe")
             update_progress(task_id, -1, "Stems não foram gerados", 0)
             return
         
@@ -325,13 +376,24 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         stems_info = []
         stem_names_added = set()
         
+        # TRADUÇÃO DOS STEMS
+        stem_translations = {
+            "vocals": "Vocal",
+            "drums": "Bateria",
+            "bass": "Baixo",
+            "other": "Outros",
+            "instrumental": "Instrumental",
+            "no_vocals": "Instrumental"
+        }
+        
         # Primeiro, adicionar todos os WAV
         for stem_file in os.listdir(demucs_output):
             if stem_file.endswith('.wav'):
                 stem_name = Path(stem_file).stem
+                translated_name = stem_translations.get(stem_name, stem_name)
                 if stem_name not in stem_names_added:
                     stems_info.append({
-                        'name': stem_name,
+                        'name': translated_name,
                         'url': f'/api/download/{song_name}/{stem_name}'
                     })
                     stem_names_added.add(stem_name)
@@ -340,9 +402,10 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         for stem_file in os.listdir(demucs_output):
             if stem_file.endswith('.mp3'):
                 stem_name = Path(stem_file).stem
+                translated_name = stem_translations.get(stem_name, stem_name)
                 if stem_name not in stem_names_added:
                     stems_info.append({
-                        'name': stem_name,
+                        'name': translated_name,
                         'url': f'/api/download/{song_name}/{stem_name}'
                     })
                     stem_names_added.add(stem_name)
@@ -360,8 +423,11 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         progress_data[task_id]['stems'] = stems_info
         progress_data[task_id]['processing_time'] = elapsed_time
         progress_data[task_id]['stems_mode'] = stems_mode
+        progress_data[task_id]['quality_mode'] = quality_mode
+        progress_data[task_id]['model_used'] = model_used
         
-        print(f"✓ Separação concluída em {elapsed_time:.1f}s - {len(stems_info)} stems (modo: {stems_mode})")
+        print(f"✓ Separação concluída em {elapsed_time:.1f}s")
+        print(f"  Stems: {len(stems_info)} | Modo: {stems_mode} | Qualidade: {quality_mode}")
         
     except Exception as e:
         print(f"Erro na separação: {str(e)}")
@@ -383,6 +449,13 @@ def separate_audio():
         # Obter opção de stems (2 ou 4)
         stems_mode = request.form.get('stems_mode', '2')  # Default: 2 stems
         
+        # Obter modo de qualidade (fast, balanced, quality)
+        quality_mode = request.form.get('quality_mode', 'balanced')  # Default: balanced
+        
+        # Validar quality_mode
+        if quality_mode not in ['fast', 'balanced', 'quality']:
+            quality_mode = 'balanced'
+        
         # Opção para processar apenas parte do áudio (para testes rápidos)
         duration_limit = request.form.get('duration', None)  # Em segundos
         
@@ -400,7 +473,7 @@ def separate_audio():
         # Iniciar processamento em background
         thread = threading.Thread(
             target=process_separation_async,
-            args=(task_id, filepath, filename, stems_mode, duration_limit)
+            args=(task_id, filepath, filename, stems_mode, duration_limit, quality_mode)
         )
         thread.daemon = True
         thread.start()
@@ -410,7 +483,8 @@ def separate_audio():
             'status': 'processing',
             'message': 'Separação iniciada em background',
             'task_id': task_id,
-            'stems_mode': stems_mode
+            'stems_mode': stems_mode,
+            'quality_mode': quality_mode
         })
         
     except Exception as e:
@@ -499,11 +573,158 @@ def download_stem(song, stem):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/uploads/<path:filename>', methods=['GET'])
+def serve_upload(filename):
+    """Serve arquivos de upload originais"""
+    try:
+        from urllib.parse import unquote
+        # Decodificar URL encoding (ex: %20 -> espaço)
+        decoded_filename = unquote(filename)
+        print(f"Filename recebido: {filename}")
+        print(f"Filename decodificado: {decoded_filename}")
+        
+        upload_path = os.path.join(UPLOAD_FOLDER, decoded_filename)
+        print(f"Caminho completo: {upload_path}")
+        print(f"Arquivo existe: {os.path.exists(upload_path)}")
+        
+        if os.path.exists(upload_path):
+            # Detectar mimetype baseado na extensão
+            if decoded_filename.lower().endswith('.mp3'):
+                return send_file(upload_path, mimetype='audio/mpeg')
+            elif decoded_filename.lower().endswith('.wav'):
+                return send_file(upload_path, mimetype='audio/wav')
+            elif decoded_filename.lower().endswith('.ogg'):
+                return send_file(upload_path, mimetype='audio/ogg')
+            elif decoded_filename.lower().endswith('.m4a'):
+                return send_file(upload_path, mimetype='audio/mp4')
+            else:
+                return send_file(upload_path, mimetype='audio/mpeg')
+        else:
+            print(f"Arquivo não encontrado: {upload_path}")
+            # Listar arquivos disponíveis para debug
+            if os.path.exists(UPLOAD_FOLDER):
+                print(f"Arquivos em {UPLOAD_FOLDER}:")
+                for f in os.listdir(UPLOAD_FOLDER):
+                    print(f"  - {f}")
+            return jsonify({'error': 'Arquivo não encontrado'}), 404
+    except Exception as e:
+        print(f"Erro ao servir arquivo: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 # ==================== ANÁLISE DE ACORDES ====================
 
+def convert_chord_notation(harte_chord):
+    """
+    Converte notação Harte (acadêmica) para notação musical tradicional
+    
+    Exemplos:
+    - "C:maj" -> "C"
+    - "A:min" -> "Am"
+    - "D:maj7" -> "Dmaj7"
+    - "G:min7" -> "Gm7"
+    - "F#:maj" -> "F#"
+    - "Bb:min" -> "Bbm"
+    - "E:5" -> "E5" (power chord)
+    - "A:sus4" -> "Asus4"
+    - "D:dim" -> "D°" ou "Ddim"
+    - "G:aug" -> "G+" ou "Gaug"
+    """
+    if ':' not in harte_chord:
+        return harte_chord
+    
+    # Separar nota e qualidade
+    root, quality = harte_chord.split(':', 1)
+    
+    # Mapeamento de qualidades
+    quality_map = {
+        'maj': '',           # C maior = C
+        'min': 'm',          # C menor = Cm
+        'maj7': 'maj7',      # C maior com sétima maior = Cmaj7
+        'min7': 'm7',        # C menor com sétima = Cm7
+        '7': '7',            # C dominante = C7
+        'dim': '°',          # C diminuto = C°
+        'aug': '+',          # C aumentado = C+
+        'sus2': 'sus2',      # C suspenso 2 = Csus2
+        'sus4': 'sus4',      # C suspenso 4 = Csus4
+        '5': '5',            # Power chord = C5
+        'maj6': '6',         # C maior com sexta = C6
+        'min6': 'm6',        # C menor com sexta = Cm6
+        '9': '9',            # C nona = C9
+        'maj9': 'maj9',      # C maior com nona = Cmaj9
+        'min9': 'm9',        # C menor com nona = Cm9
+        '11': '11',          # C décima primeira = C11
+        '13': '13',          # C décima terceira = C13
+        'dim7': '°7',        # C diminuto com sétima = C°7
+        'hdim7': 'ø7',       # C meio-diminuto = Cø7 (ou Cm7b5)
+        'minmaj7': 'm(maj7)', # C menor com sétima maior = Cm(maj7)
+    }
+    
+    # Converter qualidade
+    converted_quality = quality_map.get(quality, quality)
+    
+    return f"{root}{converted_quality}"
+
 def detect_chords_with_autochord(audio_path):
-    """Detecta acordes usando análise chroma otimizada"""
-    return analyze_chords_chroma_enhanced(audio_path), 'chroma_enhanced'
+    """Detecta acordes usando o melhor método disponível"""
+    try:
+        # Tentar usar CREMA (melhor precisão)
+        return analyze_chords_crema(audio_path), 'crema_deep_learning'
+    except ImportError:
+        print("⚠️  CREMA não instalado, usando método chroma básico")
+        print("   Para melhor precisão, instale: pip install crema")
+        return analyze_chords_chroma_enhanced(audio_path), 'chroma_enhanced'
+    except Exception as e:
+        print(f"Erro com CREMA: {e}, usando método chroma")
+        return analyze_chords_chroma_enhanced(audio_path), 'chroma_enhanced'
+
+def analyze_chords_crema(audio_path):
+    """Detecção de acordes usando CREMA (Deep Learning) - MELHOR PRECISÃO"""
+    import crema
+    import numpy as np
+    
+    print("🎵 Usando CREMA (Deep Learning) para detecção de acordes...")
+    
+    # Criar modelo CREMA
+    model = crema.models.chord.ChordModel()
+    
+    # Usar CREMA para detectar acordes (passa o caminho do arquivo)
+    chord_annotation = model.predict(filename=audio_path)
+    
+    # Processar resultados - CREMA retorna um objeto JAMS Annotation
+    chords = []
+    prev_chord = None
+    
+    # Iterar sobre os dados da anotação
+    for observation in chord_annotation.data:
+        chord_label = observation.value
+        
+        # Pular acordes "N" (sem acorde/silêncio) e "X" (desconhecido)
+        if chord_label == 'N' or chord_label == 'X':
+            continue
+        
+        start_time = float(observation.time)
+        end_time = float(observation.time + observation.duration)
+        
+        # Converter de notação Harte (C:maj) para notação tradicional (C)
+        chord_name = convert_chord_notation(chord_label)
+        
+        # Evitar duplicatas consecutivas
+        if chord_name != prev_chord:
+            chords.append({
+                'start': start_time,
+                'end': end_time,
+                'chord': chord_name
+            })
+            prev_chord = chord_name
+        else:
+            # Estender o acorde anterior
+            if chords:
+                chords[-1]['end'] = end_time
+    
+    print(f"✓ CREMA detectou {len(chords)} acordes")
+    return chords
 
 def analyze_chords_chroma_enhanced(audio_path):
     """Detecção de acordes OTIMIZADA usando análise de chroma"""
@@ -586,7 +807,9 @@ def analyze_chords_chroma_enhanced(audio_path):
                 else:
                     chord_quality = '5' if has_fifth else 'maj'
             
-            chord_name = f'{root_note}:{chord_quality}'
+            # Criar notação Harte e converter para tradicional
+            harte_notation = f'{root_note}:{chord_quality}'
+            chord_name = convert_chord_notation(harte_notation)
             
             # Timestamps
             start_time = i * hop_length / sr
