@@ -13,7 +13,7 @@ O Music Analyzer oferece **3 modos de qualidade** para separação de instrument
 **Ideal para**: Preview, testes rápidos, uso casual
 
 #### Características Técnicas
-- **Modelo**: `htdemucs_ft` (fine-tuned)
+- **Modelo**: `htdemucs` (padrão)
 - **Formato de Saída**: MP3 320kbps
 - **Precisão**: float32
 - **Shifts**: 0 (sem augmentation)
@@ -21,7 +21,7 @@ O Music Analyzer oferece **3 modos de qualidade** para separação de instrument
 - **Multi-threading**: Sim (todos os cores)
 
 #### Resultados
-- ⏱️ **Tempo**: 1-3 minutos
+- ⏱️ **Tempo**: 3-5 minutos
 - 💾 **Tamanho**: ~10MB por stem
 - 🎵 **Qualidade**: 8.5/10 (Boa)
 - 🎯 **Precisão**: Excelente para a maioria dos casos
@@ -40,14 +40,14 @@ O Music Analyzer oferece **3 modos de qualidade** para separação de instrument
 **Ideal para**: Uso geral, melhor custo-benefício
 
 #### Características Técnicas
-- **Modelo**: `htdemucs_ft` (fine-tuned)
+- **Modelo**: `htdemucs` (padrão)
 - **Formato de Saída**: MP3 320kbps
 - **Shifts**: 1 (pouco augmentation)
 - **Overlap**: 0.4
 - **Multi-threading**: Sim (todos os cores)
 
 #### Resultados
-- ⏱️ **Tempo**: 5-8 minutos
+- ⏱️ **Tempo**: 8-12 minutos
 - 💾 **Tamanho**: ~10MB por stem
 - 🎵 **Qualidade**: 9.0/10 (Ótima)
 - 🎯 **Precisão**: Excelente equilíbrio
@@ -73,7 +73,7 @@ O Music Analyzer oferece **3 modos de qualidade** para separação de instrument
 - **Multi-threading**: Sim (todos os cores)
 
 #### Resultados
-- ⏱️ **Tempo**: 15-20 minutos
+- ⏱️ **Tempo**: 20-30 minutos
 - 💾 **Tamanho**: ~40MB por stem (WAV)
 - 🎵 **Qualidade**: 9.5/10 (Perfeita)
 - 🎯 **Precisão**: Máxima possível
@@ -93,8 +93,8 @@ O Music Analyzer oferece **3 modos de qualidade** para separação de instrument
 
 | Aspecto | Rápido | Balanceado | Qualidade |
 |---------|--------|------------|-----------|
-| **Tempo (3min áudio)** | 1-3 min | 5-8 min | 15-20 min |
-| **Modelo** | htdemucs_ft | htdemucs_ft | htdemucs |
+| **Tempo (3min áudio)** | 3-5 min | 8-12 min | 20-30 min |
+| **Modelo** | htdemucs | htdemucs | htdemucs |
 | **Formato** | MP3 320k | MP3 320k | WAV |
 | **Tamanho/stem** | ~10MB | ~10MB | ~40MB |
 | **Qualidade** | 8.5/10 | 9.0/10 | 9.5/10 |

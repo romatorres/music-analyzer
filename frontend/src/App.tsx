@@ -135,16 +135,23 @@ export default function MusicAnalyzer() {
   const handleSeparateStems = () => {
     if (!file) return;
 
+    console.log("[App] Iniciando separação de stems...");
     separateStems(file, stemsMode, quality, {
       onSuccess: ({ stems: newStems, volumes, mutes }) => {
+        console.log("[App] onSuccess chamado! Stems recebidos:", newStems);
         setStems(newStems);
         setStemVolumes(volumes);
         setMutedStems(mutes);
         setSoloStems({}); // Reset solo state on new separation
         loadHistory();
+        console.log("[App] Estados atualizados. Stems length:", newStems.length);
       },
-      onError: () => {},
-      onComplete: () => {},
+      onError: () => {
+        console.error("[App] onError chamado!");
+      },
+      onComplete: () => {
+        console.log("[App] onComplete chamado!");
+      },
     });
   };
 

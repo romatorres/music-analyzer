@@ -30,7 +30,13 @@ export function useAnalysis(apiUrl: string) {
             setProgress(progressData);
             consecutiveErrors = 0; // Reset error counter on success
 
+            // Log quando chegar perto de 100%
+            if (progressData.percentage >= 90) {
+              console.log(`[pollProgress] ${progressData.percentage}% - Debug:`, progressData._debug);
+            }
+
             if (progressData.percentage >= 100 || progressData.step === -1) {
+              console.log("[pollProgress] Processo finalizado! progressData completo:", progressData);
               clearInterval(pollInterval);
 
               if (progressData.percentage >= 100 && onSuccess) {
@@ -109,13 +115,21 @@ export function useAnalysis(apiUrl: string) {
           pollProgress(
             data.task_id,
             (progressData) => {
+              // Debug: verificar o que está vindo no progressData
+              console.log("[useAnalysis] Progress data recebido:", progressData);
+              console.log("[useAnalysis] Stems no progressData:", progressData.stems);
+
               // Quando terminar, buscar os stems do progressData
-              if (progressData.stems) {
+              if (progressData.stems && progressData.stems.length > 0) {
+                console.log("[useAnalysis] Processando stems:", progressData.stems.length);
+
                 // Remover duplicatas baseado no nome do stem
                 const uniqueStems = progressData.stems.filter(
                   (stem: Stem, index: number, self: Stem[]) =>
                     index === self.findIndex((s) => s.name === stem.name)
                 );
+
+                console.log("[useAnalysis] Stems únicos:", uniqueStems.length);
 
                 const volumes: StemVolumes = {};
                 const mutes: MutedStems = {};
@@ -124,11 +138,15 @@ export function useAnalysis(apiUrl: string) {
                   mutes[stem.name] = false;
                 });
 
+                console.log("[useAnalysis] Chamando onSuccess com stems:", uniqueStems);
                 callbacks.onSuccess({
                   stems: uniqueStems,
                   volumes,
                   mutes,
                 });
+              } else {
+                console.warn("[useAnalysis] Nenhum stem encontrado no progressData!");
+                console.warn("[useAnalysis] progressData completo:", JSON.stringify(progressData, null, 2));
               }
               // Chama os callbacks de finalização aqui, após o sucesso
               setAnalyzing(false);

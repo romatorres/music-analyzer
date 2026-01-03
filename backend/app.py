@@ -73,12 +73,23 @@ def save_cache_to_file():
 
 def update_progress(task_id, step, message, percentage):
     """Atualiza o progresso de uma tarefa"""
-    progress_data[task_id] = {
-        'step': step,
-        'message': message,
-        'percentage': percentage,
-        'timestamp': datetime.now().isoformat()
-    }
+    # Se task_id já existe, atualizar apenas os campos necessários
+    # para não sobrescrever dados como 'stems', 'processing_time', etc.
+    if task_id in progress_data:
+        progress_data[task_id].update({
+            'step': step,
+            'message': message,
+            'percentage': percentage,
+            'timestamp': datetime.now().isoformat()
+        })
+    else:
+        # Se não existe, criar novo
+        progress_data[task_id] = {
+            'step': step,
+            'message': message,
+            'percentage': percentage,
+            'timestamp': datetime.now().isoformat()
+        }
     print(f"  [{percentage}%] {message}")
 
 def add_to_history(filename, stems_count, chords_count, duration, stems=None, chords=None):
@@ -238,7 +249,8 @@ def delete_analysis(filename):
 def process_separation_async(task_id, filepath, filename, stems_mode, duration_limit, quality_mode='balanced'):
     """Processa a separação de stems em background"""
     try:
-        song_name = Path(filename).stem
+        # Remover espaços extras do nome do arquivo
+        song_name = Path(filename).stem.strip()
         
         print(f"\n=== SEPARAÇÃO DE STEMS: {filename} ===")
         print(f"  Modo: {stems_mode} stems | Qualidade: {quality_mode}")
@@ -251,7 +263,7 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         if quality_mode == 'fast':
             cmd = [
                 sys.executable, '-m', 'demucs',
-                '-n', 'htdemucs_ft',      # Modelo fine-tuned (mais rápido)
+                '-n', 'htdemucs',         # Usar htdemucs padrão (já baixado)
                 '--mp3',                  # Saída em MP3
                 '--mp3-bitrate', '320',   # Alta qualidade
                 '--float32',              # Precisão otimizada (2x mais rápido)
@@ -260,14 +272,15 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
                 '--jobs', '0',            # Usar todos os cores
                 '--device', 'cpu',
             ]
-            estimated_time = "1-3 min"
+            estimated_time = "3-5 min"
             quality_label = "Rápido (Boa)"
+            model_name = 'htdemucs'
             
         # MODO 2: BALANCEADO (5-8 min) - Qualidade Ótima (9.0/10)
         elif quality_mode == 'balanced':
             cmd = [
                 sys.executable, '-m', 'demucs',
-                '-n', 'htdemucs_ft',      # Modelo fine-tuned
+                '-n', 'htdemucs',         # Usar htdemucs padrão
                 '--mp3',                  # Saída em MP3
                 '--mp3-bitrate', '320',
                 '--shifts', '1',          # Pouco augmentation
@@ -275,8 +288,9 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
                 '--jobs', '0',            # Usar todos os cores
                 '--device', 'cpu',
             ]
-            estimated_time = "5-8 min"
+            estimated_time = "8-12 min"
             quality_label = "Balanceado (Ótima)"
+            model_name = 'htdemucs'
             
         # MODO 3: MÁXIMA QUALIDADE (15-20 min) - Qualidade Perfeita (9.5/10)
         else:  # quality_mode == 'quality'
@@ -288,8 +302,9 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
                 '--jobs', '0',            # Usar todos os cores
                 '--device', 'cpu',
             ]
-            estimated_time = "15-20 min"
+            estimated_time = "20-30 min"
             quality_label = "Máxima (Perfeita)"
+            model_name = 'htdemucs'
         
         # Adicionar flag de 2 stems se escolhido
         if stems_mode == '2':
@@ -306,8 +321,19 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         # Adicionar output e arquivo
         cmd.extend(['--out', STEMS_FOLDER, filepath])
         
-        print("Comando:", ' '.join(cmd))
-        print(f"Qualidade: {quality_label} | Tempo estimado: {estimated_time}")
+        print("\n" + "="*60)
+        print("🔧 CONFIGURAÇÃO DO DEMUCS")
+        print("="*60)
+        print(f"Comando: {' '.join(cmd)}")
+        print(f"Qualidade: {quality_label}")
+        print(f"Tempo estimado: {estimated_time}")
+        print(f"Arquivo: {filepath}")
+        print(f"Arquivo existe: {os.path.exists(filepath)}")
+        print(f"Tamanho: {os.path.getsize(filepath) / (1024*1024):.2f} MB")
+        print(f"Output folder: {STEMS_FOLDER}")
+        print(f"Output existe: {os.path.exists(STEMS_FOLDER)}")
+        print("="*60 + "\n")
+        
         update_progress(task_id, 2, f"Processando ({quality_label}) - {estimated_time}...", 20)
         
         print(f"Iniciando Demucs às {datetime.now().strftime('%H:%M:%S')}")
@@ -403,50 +429,139 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
         print(f"Tempo decorrido: {elapsed_time:.1f}s")
         print(f"Return code: {result_code}")
         
-        if result_code != 0:
-            print(f"Erro no Demucs: {stderr_text[:500]}")
-            update_progress(task_id, -1, f"Erro na separação", 0)
+        # IMPORTANTE: Mesmo com erro, verificar se stems foram gerados
+        # O Demucs às vezes retorna erro mas gera os stems corretamente
+        print("\n" + "="*60)
+        print("ETAPA 1: Localizando diretório de stems...")
+        print("="*60)
+        
+        # Localizar stems gerados - htdemucs padrão
+        # Tentar com e sem espaços no final (bug do Demucs com nomes de arquivo)
+        song_name_clean = song_name.strip()
+        
+        print(f"Song name original: '{song_name}' (len={len(song_name)})")
+        print(f"Song name limpo: '{song_name_clean}' (len={len(song_name_clean)})")
+        print(f"Filename original: '{filename}'")
+        print(f"Filepath: '{filepath}'")
+        
+        # Listar o que existe em stems/htdemucs ANTES de procurar
+        htdemucs_dir = os.path.join(STEMS_FOLDER, 'htdemucs')
+        print(f"\n📁 Conteúdo de {htdemucs_dir}:")
+        if os.path.exists(htdemucs_dir):
+            try:
+                items = os.listdir(htdemucs_dir)
+                if len(items) == 0:
+                    print("  (vazio)")
+                else:
+                    for item in items:
+                        item_path = os.path.join(htdemucs_dir, item)
+                        is_dir = os.path.isdir(item_path)
+                        print(f"  - '{item}' (len={len(item)}) {'[DIR]' if is_dir else '[FILE]'}")
+                        # Se for diretório, listar conteúdo
+                        if is_dir:
+                            try:
+                                sub_items = os.listdir(item_path)
+                                if len(sub_items) == 0:
+                                    print(f"      └─ (vazio)")
+                                else:
+                                    for sub_item in sub_items:
+                                        print(f"      └─ {sub_item}")
+                            except Exception as e:
+                                print(f"      └─ Erro ao listar: {e}")
+            except Exception as e:
+                print(f"  Erro ao listar: {e}")
+        else:
+            print(f"  ✗ Diretório não existe!")
+        
+        possible_paths = [
+            os.path.join(STEMS_FOLDER, 'htdemucs', song_name_clean),
+            os.path.join(STEMS_FOLDER, 'htdemucs', song_name),  # Com espaços se houver
+        ]
+        
+        demucs_output = None
+        model_used = 'htdemucs'
+        
+        print(f"\n🔍 Tentando localizar pasta de stems:")
+        # Tentar encontrar o diretório
+        for path in possible_paths:
+            print(f"  Tentando: {path}")
+            if os.path.exists(path):
+                demucs_output = path
+                print(f"  ✓ Encontrado!")
+                break
+            else:
+                print(f"  ✗ Não existe")
+        
+        if not demucs_output:
+            print(f"\n✗ ERRO: Nenhum diretório de stems encontrado!")
+            print(f"\n🔍 DEBUG - Saída completa do Demucs:")
+            print(f"\n--- STDOUT ({len(stdout_text)} chars) ---")
+            print(stdout_text if stdout_text else "(vazio)")
+            print(f"\n--- STDERR ({len(stderr_text)} chars) ---")
+            print(stderr_text if stderr_text else "(vazio)")
+            print(f"\n--- COMANDO EXECUTADO ---")
+            print(' '.join(cmd))
+            print(f"\n--- INFORMAÇÕES DO PROCESSO ---")
+            print(f"Return code: {result_code}")
+            print(f"Tempo de execução: {elapsed_time:.1f}s")
+            
+            update_progress(task_id, -1, "Pasta de stems não foi criada", 0)
             return
+        
+        print(f"\n✓ Usando: {demucs_output} (modelo: {model_used})")
+        print("="*60)
+        
+        # Se chegou aqui, stems foram gerados com sucesso
+        # Ignorar return code se stems existem
+        if result_code != 0:
+            print(f"⚠️  Aviso: Demucs retornou código {result_code}, mas stems foram gerados com sucesso!")
         
         update_progress(task_id, 3, "Processando stems gerados...", 80)
+        print("\nETAPA 2: Listando arquivos de stems...")
         print("=" * 60)
-        print("ETAPA 1: Localizando diretório de stems...")
-        import sys
-        sys.stdout.flush()  # Forçar saída imediata
         
-        # Localizar stems gerados - verificar ambos os modelos
-        demucs_output = None
-        model_used = None
-        
-        # Tentar htdemucs_ft primeiro (modo rápido/balanceado)
-        demucs_output_ft = os.path.join(STEMS_FOLDER, 'htdemucs_ft', song_name)
-        print(f"  Verificando: {demucs_output_ft}")
-        if os.path.exists(demucs_output_ft):
-            demucs_output = demucs_output_ft
-            model_used = 'htdemucs_ft'
-            print(f"  ✓ Encontrado!")
-        else:
-            print(f"  ✗ Não encontrado")
-            # Tentar htdemucs (modo qualidade)
-            demucs_output_std = os.path.join(STEMS_FOLDER, 'htdemucs', song_name)
-            print(f"  Verificando: {demucs_output_std}")
-            if os.path.exists(demucs_output_std):
-                demucs_output = demucs_output_std
-                model_used = 'htdemucs'
-                print(f"  ✓ Encontrado!")
-            else:
-                print(f"  ✗ Não encontrado")
-        
-        print(f"\nDiretório final: {demucs_output} (modelo: {model_used})")
-        
-        if not demucs_output or not os.path.exists(demucs_output):
-            print(f"ERRO: Diretório não existe!")
-            update_progress(task_id, -1, "Stems não foram gerados", 0)
+        # Verificar novamente se o diretório existe antes de listar
+        if not os.path.exists(demucs_output):
+            print(f"✗ ERRO: Diretório desapareceu: {demucs_output}")
+            print(f"\n🔍 DEBUG - Saída do Demucs:")
+            print(f"STDOUT:\n{stdout_text[:1000]}")
+            print(f"STDERR:\n{stderr_text[:1000]}")
+            update_progress(task_id, -1, "Erro ao acessar stems", 0)
             return
         
-        print("\nETAPA 2: Listando arquivos de stems...")
-        all_files = os.listdir(demucs_output)
-        print(f"  Arquivos encontrados: {all_files}")
+        try:
+            all_files = os.listdir(demucs_output)
+            print(f"  Arquivos encontrados: {all_files}")
+            
+            # VERIFICAÇÃO CRÍTICA: Pasta existe mas está vazia?
+            if len(all_files) == 0:
+                print(f"\n✗ ERRO CRÍTICO: Pasta criada mas está VAZIA!")
+                print(f"  Diretório: {demucs_output}")
+                print(f"  Arquivos: {all_files}")
+                print(f"\n🔍 DEBUG - Saída completa do Demucs:")
+                print(f"\n--- STDOUT ({len(stdout_text)} chars) ---")
+                print(stdout_text)
+                print(f"\n--- STDERR ({len(stderr_text)} chars) ---")
+                print(stderr_text)
+                print(f"\n--- COMANDO EXECUTADO ---")
+                print(' '.join(cmd))
+                print(f"\n--- INFORMAÇÕES DO PROCESSO ---")
+                print(f"Return code: {result_code}")
+                print(f"Tempo de execução: {elapsed_time:.1f}s")
+                
+                update_progress(task_id, -1, "Demucs não gerou arquivos (pasta vazia)", 0)
+                return
+                
+        except Exception as e:
+            print(f"✗ ERRO ao listar diretório: {e}")
+            print(f"  Diretório: {demucs_output}")
+            print(f"  Existe: {os.path.exists(demucs_output)}")
+            print(f"  É diretório: {os.path.isdir(demucs_output)}")
+            print(f"\n🔍 DEBUG - Saída do Demucs:")
+            print(f"STDOUT:\n{stdout_text[:1000]}")
+            print(f"STDERR:\n{stderr_text[:1000]}")
+            update_progress(task_id, -1, f"Erro ao listar stems: {str(e)}", 0)
+            return
         
         # Listar stems disponíveis (evitar duplicatas - priorizar WAV)
         stems_info = []
@@ -492,13 +607,9 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
                 else:
                     print(f"  MP3: {stem_file} → IGNORADO (já existe WAV)")
         
-        print(f"\nETAPA 5: Atualizando progresso para 100%...")
-        update_progress(task_id, 4, f"Concluído! {len(stems_info)} stems criados", 100)
-        print(f"  ✓ Progresso atualizado!")
-        
         print(f"\nStems finais: {[s['name'] for s in stems_info]}")
         
-        print("\nETAPA 6: Obtendo duração do áudio...")
+        print("\nETAPA 5: Obtendo duração do áudio...")
         # Adicionar ao histórico
         try:
             y, sr = librosa.load(filepath, duration=10)
@@ -508,21 +619,27 @@ def process_separation_async(task_id, filepath, filename, stems_mode, duration_l
             print(f"  ✗ Erro: {e}")
             duration = 0
         
-        print("\nETAPA 7: Adicionando ao histórico...")
-        add_to_history(filename, len(stems_info), 0, duration, stems_info, None)
-        print(f"  ✓ Histórico atualizado!")
-        
-        print("\nETAPA 8: Salvando resultado no progress_data...")
-        # Salvar resultado no progress_data para o frontend buscar
+        print("\nETAPA 6: Salvando resultado no progress_data...")
+        # IMPORTANTE: Salvar stems ANTES de atualizar para 100%
+        # para evitar race condition com o frontend
         try:
             progress_data[task_id]['stems'] = stems_info
             progress_data[task_id]['processing_time'] = elapsed_time
             progress_data[task_id]['stems_mode'] = stems_mode
             progress_data[task_id]['quality_mode'] = quality_mode
             progress_data[task_id]['model_used'] = model_used
-            print("  ✓ Dados salvos no progress_data!")
+            print(f"  ✓ Dados salvos no progress_data!")
+            print(f"  ✓ Stems disponíveis: {len(stems_info)}")
         except Exception as e:
             print(f"  ✗ Erro ao salvar: {e}")
+        
+        print("\nETAPA 7: Atualizando progresso para 100%...")
+        update_progress(task_id, 4, f"Concluído! {len(stems_info)} stems criados", 100)
+        print(f"  ✓ Progresso atualizado para 100%!")
+        
+        print("\nETAPA 8: Adicionando ao histórico...")
+        add_to_history(filename, len(stems_info), 0, duration, stems_info, None)
+        print(f"  ✓ Histórico atualizado!")
         
         print(f"\n{'='*60}")
         print(f"✓ SEPARAÇÃO CONCLUÍDA COM SUCESSO!")
