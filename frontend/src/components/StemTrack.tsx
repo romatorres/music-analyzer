@@ -93,7 +93,7 @@ export const StemTrack = ({
               "h-8 w-8 p-0 text-xs font-bold transition-all",
               isMuted
                 ? "text-destructive bg-destructive/10 hover:bg-destructive/20"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                : "text-muted-foreground hover:text-foreground"
             )}
             title={isMuted ? "Ativar som" : "Silenciar"}
           >
@@ -108,8 +108,8 @@ export const StemTrack = ({
             className={cn(
               "h-8 w-8 p-0 text-xs font-bold transition-all",
               isSolo
-                ? "text-yellow-400 bg-yellow-400/10 hover:bg-yellow-400/20"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                ? "text-amber-400 bg-amber-400/10 hover:bg-amber-400/20"
+                : "text-muted-foreground hover:text-foreground"
             )}
             title={isSolo ? "Desativar solo" : "Tocar apenas este"}
           >
@@ -122,7 +122,7 @@ export const StemTrack = ({
               variant="ghost"
               size="sm"
               onClick={handleDownload}
-              className="h-8 w-8 p-0 hover:bg-accent transition-all"
+              className="h-8 w-8 p-0 transition-all"
               style={{ color }}
               title={`Baixar ${name}`}
             >
