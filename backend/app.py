@@ -672,6 +672,7 @@ def detect_chords_with_crema(audio_path):
         import crema
         import numpy as np
         
+        print("✓ CREMA carregado com sucesso!")
         print("🎵 Usando CREMA (Deep Learning)...")
         model = crema.models.chord.ChordModel()
         chord_annotation = model.predict(filename=audio_path)
@@ -701,13 +702,15 @@ def detect_chords_with_crema(audio_path):
                     chords[-1]['end'] = end_time
         
         print(f"✓ CREMA detectou {len(chords)} acordes")
-        return chords, 'crema_deep_learning'
+        return chords, 'crema'
         
-    except ImportError:
-        print("⚠️  CREMA não instalado, usando método chroma")
+    except ImportError as e:
+        print(f"⚠️  CREMA não instalado: {e}")
         return detect_chords_chroma(audio_path), 'chroma_enhanced'
     except Exception as e:
-        print(f"Erro com CREMA: {e}, usando método chroma")
+        print(f"❌ Erro com CREMA: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         return detect_chords_chroma(audio_path), 'chroma_enhanced'
 
 def detect_chords_chroma(audio_path):

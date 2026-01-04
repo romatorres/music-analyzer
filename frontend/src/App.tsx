@@ -1,6 +1,6 @@
 // src/App.tsx
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CornerDownLeft, BarChart3 } from "lucide-react";
+import { CornerDownLeft, BarChart3, Music } from "lucide-react";
 import { Button } from "./components/ui/button";
 import type WaveSurfer from "wavesurfer.js";
 
@@ -76,8 +76,15 @@ export default function MusicAnalyzer() {
     cleanupOldRefs(currentStemNames);
   }, [stems, cleanupOldRefs]);
 
-  const { analyzing, separating, detectingChords, progress, setProgress, separateStems, detectChords } =
-    useAnalysis(API_URL);
+  const {
+    analyzing,
+    separating,
+    detectingChords,
+    progress,
+    setProgress,
+    separateStems,
+    detectChords,
+  } = useAnalysis(API_URL);
 
   const { history, loadHistory, loadAnalysisFromHistory, deleteAnalysis } =
     useHistory(API_URL);
@@ -144,7 +151,10 @@ export default function MusicAnalyzer() {
         setMutedStems(mutes);
         setSoloStems({}); // Reset solo state on new separation
         loadHistory();
-        console.log("[App] Estados atualizados. Stems length:", newStems.length);
+        console.log(
+          "[App] Estados atualizados. Stems length:",
+          newStems.length
+        );
       },
       onError: () => {
         console.error("[App] onError chamado!");
@@ -390,7 +400,6 @@ export default function MusicAnalyzer() {
                   isSeparating={separating}
                   disabled={analyzing}
                 />
-                
               </div>
             )}
 
@@ -410,23 +419,26 @@ export default function MusicAnalyzer() {
           </div>
         )}
 
-        {/* {file && !loadedFromHistory && stems.length > 0 && chords.length === 0 && ( */}
-              <div className="glass-card rounded-lg p-6 text-center border-primary/50 mt-8">
-              <div className="mb-4">
-                <h3>Analise os acordes da música</h3>
-                </div>
-                <Button
-                  onClick={handleDetectChords}
-                  disabled={analyzing}
-                  size="lg"
-                  variant="outline"
-                  className="gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
-                >
-                  <BarChart3 className="h-5 w-5" />
-                  {detectingChords ? "Detectando..." : "Detectar Acordess"}
-                </Button>
-              </div>
-            {/* )} */}
+        {showPlayerView && (
+          <div className="glass-card rounded-lg p-6 text-center border-primary/50 mt-8">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-primary">
+                <Music />
+              </span>
+              <h3 className="text-xl">Analise os acordes da música</h3>
+            </div>
+            <Button
+              onClick={handleDetectChords}
+              disabled={analyzing}
+              size="lg"
+              variant="outline"
+              className="gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
+            >
+              <BarChart3 className="h-5 w-5" />
+              {detectingChords ? "Detectando..." : "Detectar Acordes"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
