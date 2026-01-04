@@ -1,5 +1,5 @@
 // src/components/StemsControl.tsx
-import { Disc, Music, Mic, Drum, Guitar } from "lucide-react";
+import { Disc, Music, Mic, Drum, Guitar, KeyboardMusic } from "lucide-react";
 import type { LucideProps } from "lucide-react";
 import { StemTrack } from "./StemTrack"; // Importando o novo componente
 import type { Stem, StemVolumes, MutedStems, SoloStems } from "../types";
@@ -43,6 +43,9 @@ export function StemsControl({
       outros: Music,
       other: Music,
       instrumental: Music,
+      piano: KeyboardMusic,
+      guitarra: Guitar,
+      guitar: Guitar,
     };
     const Icon = icons[normalizedName] || Music;
     return <Icon className="w-5 h-5" />;
@@ -60,6 +63,9 @@ export function StemsControl({
       outros: "#22C55E", // Green
       other: "#22C55E",
       instrumental: "#10B981", // Emerald
+      piano: "#F59E0B", // Amber
+      guitarra: "#EC4899", // Pink
+      guitar: "#EC4899",
     };
     return colors[normalizedName] || "#9CA3AF"; // Gray
   };

@@ -4,6 +4,71 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ---
 
+## [2.0.0] - 2026-01-03 🎉 MAJOR UPGRADE
+
+### ✨ Adicionado
+
+#### 🎸 Suporte a 6 Stems (NOVO!)
+- **6 stems completos**: Vocal, Bateria, Baixo, Outros, **Piano**, **Guitarra**
+- Modelo `htdemucs_6s` para separação avançada
+- Isolamento individual de piano e guitarra
+- Ideal para músicas com instrumentos acústicos
+
+#### 🎚️ Sistema de Qualidade Reformulado
+- **3 níveis otimizados**:
+  - 🟢 **Básica**: 2-8 min, Qualidade Boa (7/10), MP3 256kbps
+  - 🟡 **Intermediária**: 5-15 min, Qualidade Ótima (8.5/10), MP3 320kbps (Recomendado)
+  - 🔴 **Máxima**: 10-30 min, Qualidade Perfeita (9.5/10), WAV sem compressão
+
+#### 🎯 Configurações Avançadas
+- Shifts configuráveis (0, 1, 3) por nível de qualidade
+- Overlap otimizado (0.25, 0.4, 0.5)
+- Float32 para maior precisão (intermediária e máxima)
+- Segment size otimizado para qualidade máxima
+
+#### 🎨 Interface Atualizada
+- Grid de 3 colunas para seleção de stems (2, 4, 6)
+- Ícones e cores para Piano (Amber) e Guitarra (Pink)
+- Tempos estimados dinâmicos por combinação stems/qualidade
+- Descrições detalhadas de cada configuração
+
+#### 📡 API Melhorada
+- Novo endpoint `/api/quality-info` com informações detalhadas
+- Validação robusta de parâmetros (stems_mode, quality_mode)
+- Suporte a múltiplos modelos (htdemucs, htdemucs_6s)
+- Download com suporte a múltiplos modelos
+
+### 🔄 Modificado
+
+#### Backend
+- Renomeado qualidades: `fast/balanced/quality` → `basic/intermediate/maximum`
+- Configurações centralizadas em `QUALITY_CONFIGS`
+- Função `process_separation_async` completamente refatorada
+- Melhor tratamento de erros e logs detalhados
+- Suporte a arquivo temporário para nomes com espaços
+
+#### Frontend
+- Tipos atualizados: `StemsMode = "2" | "4" | "6"`
+- Tipos atualizados: `Quality = "basic" | "intermediate" | "maximum"`
+- `SeparationSettings.tsx` com 3 opções de stems
+- `StemsControl.tsx` com traduções para Piano e Guitarra
+- Estados separados para separação e detecção de acordes
+
+### 🐛 Corrigido
+- Race condition ao salvar stems no `progress_data`
+- Função `update_progress` agora usa `.update()` ao invés de sobrescrever
+- Botões de separação e acordes com estados independentes
+- Tratamento de nomes de arquivo com espaços
+- Timeout aumentado para 30s no modo qualidade máxima
+
+### 📖 Documentação
+- `docs/MODOS_QUALIDADE.md` atualizado com 6 stems
+- README principal com nova seção de funcionalidades
+- Tabelas comparativas atualizadas
+- Exemplos de uso para cada configuração
+
+---
+
 ## [1.2.0] - 2026-01-01
 
 ### ✨ Adicionado

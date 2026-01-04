@@ -1,8 +1,214 @@
-# 🎚️ Modos de Qualidade - Separação de Stems
+# 🎚️ Modos de Qualidade e Stems - Separação Avançada
 
 ## 📋 Visão Geral
 
-O Music Analyzer oferece **3 modos de qualidade** para separação de instrumentos, permitindo que você escolha o melhor equilíbrio entre velocidade e qualidade de acordo com suas necessidades.
+O Music Analyzer v2.0 oferece **3 níveis de qualidade** e **3 opções de stems** para separação de instrumentos, permitindo total controle sobre velocidade, qualidade e detalhamento da análise.
+
+---
+
+## 🎯 Opções de Stems
+
+### 🎵 2 Stems - Vocal + Instrumental
+
+**Ideal para**: Karaokê, remixes simples, backing tracks
+
+#### Características
+- **Instrumentos**: Vocal + Instrumental (tudo menos vocal)
+- **Modelo**: htdemucs
+- **Velocidade**: Mais rápido (50% do tempo de 4 stems)
+- **Uso de Memória**: Menor
+
+#### Quando Usar
+- ✅ Criar versões karaokê
+- ✅ Remover vocal para backing track
+- ✅ Isolar vocal para análise
+- ✅ Processamento rápido
+
+---
+
+### 🎸 4 Stems - Separação Completa (Recomendado)
+
+**Ideal para**: Uso geral, mixagem, produção
+
+#### Características
+- **Instrumentos**: Vocal, Bateria, Baixo, Outros (harmonia)
+- **Modelo**: htdemucs
+- **Velocidade**: Balanceada
+- **Uso de Memória**: Moderado
+
+#### Quando Usar
+- ✅ **Uso geral (RECOMENDADO)**
+- ✅ Mixagem e remixagem
+- ✅ Análise de arranjo
+- ✅ Produção musical
+- ✅ Melhor equilíbrio detalhamento/velocidade
+
+---
+
+### 🎹 6 Stems - Separação Máxima (NOVO!)
+
+**Ideal para**: Músicas acústicas, análise detalhada, produção avançada
+
+#### Características
+- **Instrumentos**: Vocal, Bateria, Baixo, Outros, **Piano**, **Guitarra**
+- **Modelo**: htdemucs_6s (especializado)
+- **Velocidade**: Mais lento (2x o tempo de 4 stems)
+- **Uso de Memória**: Maior
+
+#### Quando Usar
+- ✅ Músicas com piano e/ou guitarra proeminentes
+- ✅ Análise detalhada de arranjo
+- ✅ Produção profissional
+- ✅ Isolamento de instrumentos específicos
+- ✅ Música acústica, rock, jazz
+
+---
+
+## 🎚️ Níveis de Qualidade
+
+### 🟢 Básica - Rápido e Eficiente
+
+**Ideal para**: Preview, testes, uso casual
+
+#### Características Técnicas
+- **Shifts**: 0 (sem augmentation)
+- **Overlap**: 0.25
+- **Float32**: Não
+- **Formato**: MP3 256kbps
+- **Segment**: Default
+
+#### Resultados
+- ⏱️ **Tempo**: 2-8 min (dependendo dos stems)
+- 💾 **Tamanho**: ~8MB por stem
+- 🎵 **Qualidade**: 7/10 (Boa)
+- 🎯 **Precisão**: Suficiente para maioria dos casos
+
+#### Quando Usar
+- ✅ Testar rapidamente uma música
+- ✅ Preview antes de processamento completo
+- ✅ Uso casual e não-profissional
+- ✅ Quando tempo é prioridade
+- ✅ Espaço em disco limitado
+
+---
+
+### 🟡 Intermediária - Melhor Custo-Benefício (Recomendado)
+
+**Ideal para**: Uso geral, produção semi-profissional
+
+#### Características Técnicas
+- **Shifts**: 1 (pouco augmentation)
+- **Overlap**: 0.4
+- **Float32**: Sim (maior precisão)
+- **Formato**: MP3 320kbps
+- **Segment**: Default
+
+#### Resultados
+- ⏱️ **Tempo**: 5-15 min (dependendo dos stems)
+- 💾 **Tamanho**: ~10MB por stem
+- 🎵 **Qualidade**: 8.5/10 (Ótima)
+- 🎯 **Precisão**: Excelente equilíbrio
+
+#### Quando Usar
+- ✅ **Uso geral (RECOMENDADO)**
+- ✅ Projetos pessoais e semi-profissionais
+- ✅ Quando você quer boa qualidade sem esperar muito
+- ✅ Melhor equilíbrio velocidade/qualidade
+- ✅ Maioria dos casos de uso
+
+---
+
+### 🔴 Máxima - Qualidade Profissional
+
+**Ideal para**: Produção profissional, masterização
+
+#### Características Técnicas
+- **Shifts**: 3 (alto augmentation)
+- **Overlap**: 0.5 (máximo)
+- **Float32**: Sim (máxima precisão)
+- **Formato**: WAV (sem compressão)
+- **Segment**: 80 (otimizado)
+
+#### Resultados
+- ⏱️ **Tempo**: 10-30 min (dependendo dos stems)
+- 💾 **Tamanho**: ~35MB por stem (WAV)
+- 🎵 **Qualidade**: 9.5/10 (Perfeita)
+- 🎯 **Precisão**: Máxima possível
+
+#### Quando Usar
+- ✅ Produção profissional
+- ✅ Masterização de áudio
+- ✅ Quando qualidade é prioridade absoluta
+- ✅ Projetos comerciais
+- ✅ Quando tempo não é problema
+
+---
+
+## 📊 Tabela Comparativa Completa
+
+### Por Número de Stems
+
+| Stems | Básica | Intermediária | Máxima |
+|-------|--------|---------------|--------|
+| **2** | 2-4 min | 5-8 min | 10-15 min |
+| **4** | 3-6 min | 8-12 min | 15-20 min |
+| **6** | 4-8 min | 10-15 min | 20-30 min |
+
+### Por Qualidade
+
+| Aspecto | Básica | Intermediária | Máxima |
+|---------|--------|---------------|--------|
+| **Shifts** | 0 | 1 | 3 |
+| **Overlap** | 0.25 | 0.4 | 0.5 |
+| **Float32** | ❌ | ✅ | ✅ |
+| **Formato** | MP3 256k | MP3 320k | WAV |
+| **Tamanho/stem** | ~8MB | ~10MB | ~35MB |
+| **Qualidade** | 7/10 | 8.5/10 | 9.5/10 |
+| **CPU** | 100% | 100% | 100% |
+
+---
+
+## 🎨 Interface do Usuário
+
+### Seleção de Stems
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Modo de Separação (Stems)                              │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
+│  │ 🎵 2     │  │ 🎸 4     │  │ 🎹 6     │             │
+│  │ Stems    │  │ Stems    │  │ Stems    │             │
+│  │          │  │          │  │          │             │
+│  │ Vocal +  │  │ Vocal,   │  │ Vocal,   │             │
+│  │ Instrum. │  │ Bateria, │  │ Bateria, │             │
+│  │          │  │ Baixo,   │  │ Baixo,   │             │
+│  │          │  │ Outros   │  │ Outros,  │             │
+│  │          │  │          │  │ Piano,   │             │
+│  │          │  │          │  │ Guitarra │             │
+│  └──────────┘  └──────────┘  └──────────┘             │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Seleção de Qualidade
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Qualidade de Processamento                             │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
+│  │ 🟢 Básica│  │ 🟡 Inter.│  │ 🔴 Máxima│             │
+│  │          │  │[Recomend]│  │          │             │
+│  │ 2-8 min  │  │ 5-15 min │  │ 10-30min │             │
+│  │ Boa 7/10 │  │ Ótima8.5 │  │ Perf 9.5 │             │
+│  │ MP3 256k │  │ MP3 320k │  │ WAV      │             │
+│  └──────────┘  └──────────┘  └──────────┘             │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 

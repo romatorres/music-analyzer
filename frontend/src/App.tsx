@@ -44,9 +44,9 @@ export default function MusicAnalyzer() {
   const [audioUrlForVisualizer, setAudioUrlForVisualizer] = useState<
     string | null
   >(null);
-  const [stemsMode, setStemsMode] = useState<"2" | "4">("4");
-  const [quality, setQuality] = useState<"fast" | "balanced" | "quality">(
-    "balanced"
+  const [stemsMode, setStemsMode] = useState<"2" | "4" | "6">("4");
+  const [quality, setQuality] = useState<"basic" | "intermediate" | "maximum">(
+    "intermediate"
   );
 
   // Refs
@@ -76,7 +76,7 @@ export default function MusicAnalyzer() {
     cleanupOldRefs(currentStemNames);
   }, [stems, cleanupOldRefs]);
 
-  const { analyzing, progress, setProgress, separateStems, detectChords } =
+  const { analyzing, separating, detectingChords, progress, setProgress, separateStems, detectChords } =
     useAnalysis(API_URL);
 
   const { history, loadHistory, loadAnalysisFromHistory, deleteAnalysis } =
@@ -372,13 +372,14 @@ export default function MusicAnalyzer() {
               onMasterMuteToggle={handleMasterMuteToggle}
             />
 
+            {/* ChordSlider */}
             {chords.length > 0 && (
               <div className="mt-6">
                 <ChordSlider chords={chords} currentTime={currentTime} />
               </div>
             )}
 
-            {file && !loadedFromHistory && (
+            {file && !loadedFromHistory && stems.length === 0 && (
               <div className="flex flex-col items-center gap-6 my-8">
                 <SeparationSettings
                   stemsMode={stemsMode}
@@ -386,19 +387,10 @@ export default function MusicAnalyzer() {
                   quality={quality}
                   onQualityChange={setQuality}
                   onSeparate={handleSeparateStems}
-                  isSeparating={analyzing}
+                  isSeparating={separating}
                   disabled={analyzing}
                 />
-                <Button
-                  onClick={handleDetectChords}
-                  disabled={analyzing || chords.length > 0}
-                  size="lg"
-                  variant="outline"
-                  className="gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
-                >
-                  <BarChart3 className="h-5 w-5" />
-                  {analyzing ? "Detectando..." : "Detectar Acordes"}
-                </Button>
+                
               </div>
             )}
 
@@ -417,6 +409,24 @@ export default function MusicAnalyzer() {
             />
           </div>
         )}
+
+        {/* {file && !loadedFromHistory && stems.length > 0 && chords.length === 0 && ( */}
+              <div className="glass-card rounded-lg p-6 text-center border-primary/50 mt-8">
+              <div className="mb-4">
+                <h3>Analise os acordes da música</h3>
+                </div>
+                <Button
+                  onClick={handleDetectChords}
+                  disabled={analyzing}
+                  size="lg"
+                  variant="outline"
+                  className="gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-purple-500/10 to-purple-600/10 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
+                >
+                  <BarChart3 className="h-5 w-5" />
+                  {detectingChords ? "Detectando..." : "Detectar Acordess"}
+                </Button>
+              </div>
+            {/* )} */}
       </div>
     </div>
   );

@@ -11,6 +11,8 @@ import type {
 
 export function useAnalysis(apiUrl: string) {
   const [analyzing, setAnalyzing] = useState(false);
+  const [separating, setSeparating] = useState(false);
+  const [detectingChords, setDetectingChords] = useState(false);
   const [progress, setProgress] = useState<ProgressData | null>(null);
 
   const pollProgress = useCallback(
@@ -75,8 +77,8 @@ export function useAnalysis(apiUrl: string) {
   const separateStems = useCallback(
     async (
       file: File,
-      stemsMode: "2" | "4",
-      qualityMode: "fast" | "balanced" | "quality",
+      stemsMode: "2" | "4" | "6",
+      qualityMode: "basic" | "intermediate" | "maximum",
       callbacks: {
         onSuccess: (data: {
           stems: Stem[];
@@ -88,6 +90,7 @@ export function useAnalysis(apiUrl: string) {
       }
     ) => {
       setAnalyzing(true);
+      setSeparating(true);
       setProgress({
         step: 1,
         message: "Iniciando separação de instrumentos...",
@@ -150,17 +153,20 @@ export function useAnalysis(apiUrl: string) {
               }
               // Chama os callbacks de finalização aqui, após o sucesso
               setAnalyzing(false);
+              setSeparating(false);
               callbacks.onComplete();
             },
             () => {
               callbacks.onError();
               setAnalyzing(false);
+              setSeparating(false);
               callbacks.onComplete();
             }
           );
         } else {
           // Se não houver task_id, finalize imediatamente
           setAnalyzing(false);
+          setSeparating(false);
           callbacks.onComplete();
         }
       } catch (error) {
@@ -175,6 +181,7 @@ export function useAnalysis(apiUrl: string) {
         callbacks.onError();
         // Garante a finalização em caso de erro na requisição inicial
         setAnalyzing(false);
+        setSeparating(false);
         callbacks.onComplete();
       }
     },
@@ -191,6 +198,7 @@ export function useAnalysis(apiUrl: string) {
       }
     ) => {
       setAnalyzing(true);
+      setDetectingChords(true);
       setProgress({
         step: 1,
         message: "Iniciando detecção de acordes...",
@@ -222,6 +230,7 @@ export function useAnalysis(apiUrl: string) {
           }
 
           setAnalyzing(false);
+          setDetectingChords(false);
           callbacks.onComplete();
         } else {
           throw new Error("Nenhum acorde detectado");
@@ -238,6 +247,7 @@ export function useAnalysis(apiUrl: string) {
         setTimeout(() => setProgress(null), 5000);
         callbacks.onError();
         setAnalyzing(false);
+        setDetectingChords(false);
         callbacks.onComplete();
       }
     },
@@ -246,6 +256,8 @@ export function useAnalysis(apiUrl: string) {
 
   return {
     analyzing,
+    separating,
+    detectingChords,
     progress,
     setProgress,
     separateStems,

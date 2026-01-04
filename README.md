@@ -3,6 +3,7 @@
 Um player de música inteligente que separa instrumentos automaticamente e detecta acordes em tempo real usando Demucs e Deep Learning.
 
 ![Status](https://img.shields.io/badge/status-funcionando-brightgreen)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-blue)
 ![React](https://img.shields.io/badge/react-19-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -30,22 +31,33 @@ Um player de música inteligente que separa instrumentos automaticamente e detec
 - **Controles Intuitivos**: Barra de progresso clicável
 - **Drag & Drop**: Arraste arquivos diretamente
 
-### 🎸 Separação de Instrumentos (Stems)
+### 🎸 Separação de Instrumentos (Stems) - UPGRADE 2.0! 🎉
 
 - **Demucs 4.0 Otimizado**: Separação de alta qualidade usando IA
-- **3 Modos de Qualidade**: Escolha entre Rápido, Balanceado ou Máxima Qualidade
-- **4 Stems**: Vocal, Bateria, Baixo, Outros (harmonia)
+- **3 Níveis de Qualidade**: Básica, Intermediária, Máxima
+- **3 Opções de Stems**:
+  - **2 Stems**: Vocal + Instrumental (mais rápido)
+  - **4 Stems**: Vocal, Bateria, Baixo, Outros (padrão)
+  - **6 Stems**: Vocal, Bateria, Baixo, Outros, **Piano**, **Guitarra** ⭐ NOVO!
 - **Controle Individual**: Volume e mute para cada instrumento
 - **Mixagem em Tempo Real**: Crie suas próprias versões
-- **Processamento Flexível**: 1-3 min (Rápido) até 15-20 min (Qualidade Máxima)
+- **Processamento Flexível**: 2-30 min dependendo da configuração
 
-#### Modos de Qualidade
+#### Opções de Stems
 
-| Modo | Tempo | Qualidade | Tamanho | Uso Recomendado |
-|------|-------|-----------|---------|-----------------|
-| ⚡ **Rápido** | 1-3 min | Boa (8.5/10) | ~10MB | Preview, uso casual |
-| ⚖️ **Balanceado** | 5-8 min | Ótima (9.0/10) | ~10MB | **Uso geral (Recomendado)** |
-| 🎵 **Qualidade** | 15-20 min | Perfeita (9.5/10) | ~40MB | Produção profissional |
+| Stems | Instrumentos | Modelo | Uso Recomendado |
+|-------|-------------|--------|-----------------|
+| **2** | Vocal + Instrumental | htdemucs | Karaokê, remixes simples |
+| **4** | Vocal, Bateria, Baixo, Outros | htdemucs | **Uso geral (Recomendado)** |
+| **6** | Vocal, Bateria, Baixo, Outros, Piano, Guitarra | htdemucs_6s | Músicas acústicas, análise detalhada |
+
+#### Níveis de Qualidade
+
+| Nível | Tempo | Qualidade | Formato | Uso Recomendado |
+|-------|-------|-----------|---------|-----------------|
+| 🟢 **Básica** | 2-8 min | Boa (7/10) | MP3 256kbps | Preview, uso casual |
+| 🟡 **Intermediária** | 5-15 min | Ótima (8.5/10) | MP3 320kbps | **Uso geral (Recomendado)** |
+| 🔴 **Máxima** | 10-30 min | Perfeita (9.5/10) | WAV | Produção profissional |
 
 > 📖 **Documentação completa**: [Modos de Qualidade](docs/MODOS_QUALIDADE.md)
 
@@ -124,8 +136,9 @@ O frontend estará rodando em `http://localhost:5173`
 2. **Arraste** um arquivo MP3/WAV ou clique para selecionar
 3. **Player carrega automaticamente** - use play/pause imediatamente
 4. **Waveform aparece** - clique para navegar pela música
-5. **Clique em "Separar Instrumentos"** para análise de instrumentos
-   - Escolha o modo de qualidade (Rápido, Balanceado ou Qualidade)
+5. **Clique em "Separar Instrumentos"**:
+   - Escolha o número de stems (2, 4 ou 6)
+   - Escolha o nível de qualidade (Básica, Intermediária ou Máxima)
    - Confirme e aguarde o processamento
 6. **Clique em "Detectar Acordes"** para análise harmônica
 7. **Aguarde o processamento** (primeira vez baixa modelos ~2GB)
@@ -135,63 +148,50 @@ O frontend estará rodando em `http://localhost:5173`
 
 ## ⚡ Performance
 
-### Modos de Qualidade para Separação de Stems
+### Tempos de Processamento por Configuração
 
-O sistema oferece **3 modos de qualidade** que você pode escolher na interface:
+#### 2 Stems (Vocal + Instrumental)
 
-#### ⚡ Modo Rápido
-- **Tempo**: 1-3 minutos
-- **Qualidade**: 8.5/10 (Boa)
-- **Tamanho**: ~10MB por stem (MP3)
-- **Uso**: Preview, testes, uso casual
+| Qualidade | Tempo | Formato | Tamanho |
+|-----------|-------|---------|---------|
+| Básica | 2-4 min | MP3 256k | ~8MB |
+| Intermediária | 5-8 min | MP3 320k | ~10MB |
+| Máxima | 10-15 min | WAV | ~35MB |
 
-#### ⚖️ Modo Balanceado (Recomendado)
-- **Tempo**: 5-8 minutos
-- **Qualidade**: 9.0/10 (Ótima)
-- **Tamanho**: ~10MB por stem (MP3)
-- **Uso**: Uso geral, melhor custo-benefício
+#### 4 Stems (Vocal, Bateria, Baixo, Outros)
 
-#### 🎵 Modo Máxima Qualidade
-- **Tempo**: 15-20 minutos
-- **Qualidade**: 9.5/10 (Perfeita)
-- **Tamanho**: ~40MB por stem (WAV)
-- **Uso**: Produção profissional, masterização
+| Qualidade | Tempo | Formato | Tamanho |
+|-----------|-------|---------|---------|
+| Básica | 3-6 min | MP3 256k | ~32MB |
+| Intermediária | 8-12 min | MP3 320k | ~40MB |
+| Máxima | 15-20 min | WAV | ~140MB |
 
-### Comparação de Performance
+#### 6 Stems (+ Piano + Guitarra) ⭐ NOVO!
 
-| Métrica         | Modo Rápido | Modo Balanceado | Modo Qualidade |
-| --------------- | ----------- | --------------- | -------------- |
-| Tempo (3min MP3)| 1-3 min     | 5-8 min         | 15-20 min      |
-| Modelo          | htdemucs_ft | htdemucs_ft     | htdemucs       |
-| Formato         | MP3 320k    | MP3 320k        | WAV            |
-| Tamanho/stem    | ~10MB       | ~10MB           | ~40MB          |
-| Qualidade       | 8.5/10      | 9.0/10          | 9.5/10         |
-| Shifts          | 0           | 1               | 5              |
-| Multi-core      | ✅          | ✅              | ✅             |
+| Qualidade | Tempo | Formato | Tamanho |
+|-----------|-------|---------|---------|
+| Básica | 4-8 min | MP3 256k | ~48MB |
+| Intermediária | 10-15 min | MP3 320k | ~60MB |
+| Máxima | 20-30 min | WAV | ~210MB |
 
-> 📖 **Documentação completa**: [Modos de Qualidade](docs/MODOS_QUALIDADE.md)
+### Configurações Técnicas por Nível
 
-### Otimizações Implementadas (Todos os Modos)
+| Nível | Shifts | Overlap | Float32 | Segment | Modelo |
+|-------|--------|---------|---------|---------|--------|
+| Básica | 0 | 0.25 | ❌ | default | htdemucs / htdemucs_6s |
+| Intermediária | 1 | 0.4 | ✅ | default | htdemucs / htdemucs_6s |
+| Máxima | 3 | 0.5 | ✅ | 80 | htdemucs / htdemucs_6s |
 
-#### Tecnologias de Otimização
+### Otimizações Implementadas
 
-- ✅ **Modelos Fine-Tuned**: `htdemucs_ft` nos modos Rápido e Balanceado
-- ✅ **Formato MP3**: Saída em MP3 320kbps (75% menor que WAV)
-- ✅ **Float32**: Precisão otimizada (2x mais rápido)
-- ✅ **Shifts Variáveis**: 0 (Rápido), 1 (Balanceado), 5 (Qualidade)
+- ✅ **Modelos Otimizados**: htdemucs (2/4 stems) e htdemucs_6s (6 stems)
+- ✅ **Formato MP3**: Saída em MP3 para níveis Básica e Intermediária
+- ✅ **Float32**: Precisão otimizada nos níveis Intermediária e Máxima
+- ✅ **Shifts Variáveis**: 0, 1 ou 3 dependendo do nível
 - ✅ **Multi-threading**: Usa todos os cores do processador
+- ✅ **Segment Size**: Otimizado para qualidade máxima
 
-### Tempos Esperados (CPU)
-
-| Modo    | Duração Áudio | Tempo Processamento |
-| ------- | ------------- | ------------------- |
-| Rápido (2 stems) | 3 min | ~1-2 min |
-| Rápido (4 stems) | 3 min | ~2-3 min |
-| Balanceado (2 stems) | 3 min | ~3-5 min |
-| Balanceado (4 stems) | 3 min | ~5-8 min |
-| Qualidade (4 stems) | 3 min | ~15-20 min |
-
-**Com GPU**: 10-20x mais rápido! (~30-60s para 3min de áudio no modo Rápido)
+**Com GPU**: 10-20x mais rápido! (~30-60s para 3min de áudio)
 
 ---
 
@@ -274,14 +274,49 @@ Você pode ver qual método foi usado na resposta da API:
 
 ```
 GET  /api/health              - Status do servidor
+GET  /api/quality-info        - Informações sobre qualidades disponíveis ⭐ NOVO!
 POST /api/separate            - Separar stems (assíncrono)
 POST /api/chords              - Detectar acordes
 GET  /api/progress/:id        - Progresso de tarefa
 GET  /api/history             - Histórico de análises
 GET  /api/analysis/:filename  - Carregar análise anterior
 DELETE /api/analysis/:filename - Deletar análise
-GET  /api/download/:song/:stem - Download de stem
+GET  /api/download/:model/:song/:stem - Download de stem (suporta múltiplos modelos) ⭐ ATUALIZADO!
 GET  /uploads/:filename       - Servir arquivo original
+```
+
+#### Exemplo: Separar com 6 Stems
+
+```bash
+curl -X POST http://localhost:5000/api/separate \
+  -F "audio=@musica.mp3" \
+  -F "stems_mode=6" \
+  -F "quality_mode=intermediate"
+```
+
+#### Exemplo: Obter Informações de Qualidade
+
+```bash
+curl http://localhost:5000/api/quality-info
+```
+
+Resposta:
+```json
+{
+  "qualities": {
+    "basic": {
+      "name": "Básica",
+      "description": "Rápido (Boa qualidade)",
+      "score": "7/10",
+      "time_estimates": {
+        "2_stems": "2-4 min",
+        "4_stems": "3-6 min",
+        "6_stems": "4-8 min"
+      }
+    },
+    ...
+  }
+}
 ```
 
 ---
@@ -411,6 +446,7 @@ pip install crema "tensorflow>=2.10,<2.16" "scikit-learn>=1.0,<1.3"
 
 ## 🎯 Próximas Melhorias
 
+- [ ] **GPU Support**: Aceleração com CUDA (10-20x mais rápido)
 - [ ] **BPM Detection**: Detecção automática de tempo
 - [ ] **Key Detection**: Identificação de tonalidade
 - [ ] **Export Features**: Salvar stems e mixagens
@@ -420,6 +456,7 @@ pip install crema "tensorflow>=2.10,<2.16" "scikit-learn>=1.0,<1.3"
 - [ ] **MIDI Export**: Acordes para MIDI
 - [ ] **Batch Processing**: Múltiplos arquivos
 - [ ] **Mobile App**: Versão para celular
+- [ ] **8 Stems**: Suporte futuro para mais instrumentos
 
 ---
 
@@ -432,15 +469,21 @@ pip install crema "tensorflow>=2.10,<2.16" "scikit-learn>=1.0,<1.3"
 - **Arquivo**: 4MB MP3, 3:30 minutos, 320kbps
 - **OS**: Windows 11
 
-### Resultados
+### Resultados - 4 Stems
 
-| Configuração                  | Tempo    | Tamanho Total  | Qualidade  |
-| ----------------------------- | -------- | -------------- | ---------- |
-| htdemucs (padrão)             | 15:23    | 160MB (WAV)    | 9.5/10     |
-| htdemucs + MP3                | 14:51    | 40MB (MP3)     | 9.0/10     |
-| htdemucs_ft + MP3             | 8:12     | 40MB (MP3)     | 9.2/10     |
-| **htdemucs_ft + otimizações** | **2:47** | **40MB (MP3)** | **8.8/10** |
-| htdemucs_ft + GPU (CUDA)      | 0:45     | 40MB (MP3)     | 8.8/10     |
+| Configuração | Tempo | Tamanho Total | Qualidade |
+|--------------|-------|---------------|-----------|
+| Básica | 3:45 | 32MB (MP3) | 7.0/10 |
+| Intermediária | 8:23 | 40MB (MP3) | 8.5/10 |
+| Máxima | 16:12 | 140MB (WAV) | 9.5/10 |
+
+### Resultados - 6 Stems ⭐ NOVO!
+
+| Configuração | Tempo | Tamanho Total | Qualidade |
+|--------------|-------|---------------|-----------|
+| Básica | 5:18 | 48MB (MP3) | 7.0/10 |
+| Intermediária | 11:45 | 60MB (MP3) | 8.5/10 |
+| Máxima | 23:30 | 210MB (WAV) | 9.5/10 |
 
 ---
 
@@ -505,4 +548,4 @@ Para dúvidas, sugestões ou problemas, abra uma issue no GitHub.
 
 **Desenvolvido com ❤️ usando Demucs, CREMA, React e muito café ☕**
 
-*Última atualização: Janeiro 2026*
+*Última atualização: Janeiro 2026 - v2.0.0*

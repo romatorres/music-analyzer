@@ -7,11 +7,12 @@ import {
   Disc,
   Music2,
   Music4,
+  Music,
 } from "lucide-react";
 import { Button } from "./ui/button";
 
-type StemsMode = "2" | "4";
-type Quality = "fast" | "balanced" | "quality";
+type StemsMode = "2" | "4" | "6";
+type Quality = "basic" | "intermediate" | "maximum";
 
 interface SeparationSettingsProps {
   stemsMode: StemsMode;
@@ -25,28 +26,28 @@ interface SeparationSettingsProps {
 
 const qualityOptions = [
   {
-    id: "fast" as const,
+    id: "basic" as const,
     icon: Zap,
-    label: "Rápido",
-    time: "3-5 min",
-    quality: "Boa",
-    description: "Ideal para preview e uso casual",
+    label: "Básica",
+    time: "2-6 min",
+    quality: "Boa (7/10)",
+    description: "Rápido para preview e uso casual",
   },
   {
-    id: "balanced" as const,
+    id: "intermediate" as const,
     icon: Scale,
-    label: "Balanceado",
-    time: "8-12 min",
-    quality: "Ótima",
+    label: "Intermediária",
+    time: "5-15 min",
+    quality: "Ótima (8.5/10)",
     description: "Melhor custo-benefício (Recomendado)",
   },
   {
-    id: "quality" as const,
+    id: "maximum" as const,
     icon: Sparkles,
-    label: "Máxima Qualidade",
-    time: "20-30 min",
-    quality: "Perfeita",
-    description: "Produção profissional",
+    label: "Máxima",
+    time: "10-30 min",
+    quality: "Perfeita (9.5/10)",
+    description: "Produção profissional (WAV)",
   },
 ];
 
@@ -64,6 +65,13 @@ const stemsOptions = [
     label: "4 Stems",
     description: "Vocal, Bateria, Baixo, Outros",
     info: "Separação completa e detalhada.",
+  },
+  {
+    id: "6" as const,
+    icon: Music,
+    label: "6 Stems",
+    description: "Vocal, Bateria, Baixo, Outros, Piano, Guitarra",
+    info: "Separação máxima com piano e guitarra isolados.",
   },
 ];
 
@@ -90,7 +98,7 @@ export const SeparationSettings: React.FC<SeparationSettingsProps> = ({
         <label className="block text-base font-medium text-gray-300">
           Modo de Separação (Stems)
         </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {stemsOptions.map((opt) => (
             <button
               key={opt.id}
@@ -155,7 +163,7 @@ export const SeparationSettings: React.FC<SeparationSettingsProps> = ({
                   }
                 `}
               >
-                {q.id === "balanced" && (
+                {q.id === "intermediate" && (
                   <div className="absolute -top-3 right-8 bg-primary text-background text-xs px-2 py-1 rounded-full font-medium z-10">
                     Recomendado
                   </div>
