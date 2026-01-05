@@ -382,13 +382,6 @@ export default function MusicAnalyzer() {
               onMasterMuteToggle={handleMasterMuteToggle}
             />
 
-            {/* ChordSlider */}
-            {chords.length > 0 && (
-              <div className="mt-6">
-                <ChordSlider chords={chords} currentTime={currentTime} />
-              </div>
-            )}
-
             {file && !loadedFromHistory && stems.length === 0 && (
               <div className="flex flex-col items-center gap-6 my-8">
                 <SeparationSettings
@@ -425,14 +418,30 @@ export default function MusicAnalyzer() {
               <span className="text-primary">
                 <Music />
               </span>
-              <h3 className="text-xl">Analise os acordes da música</h3>
+              <h3 className="text-xl">
+                {chords.length > 0
+                  ? "Analise concluida"
+                  : "Analisar e Detectar Acordes"}
+              </h3>
             </div>
+
+            {/* ChordSlider */}
+            {chords.length > 0 && (
+              <div className="mt-6">
+                <ChordSlider chords={chords} currentTime={currentTime} />
+              </div>
+            )}
+
             <Button
               onClick={handleDetectChords}
-              disabled={analyzing}
+              disabled={analyzing && chords.length > 0}
               size="lg"
               variant="outline"
-              className="gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
+              className={
+                analyzing
+                  ? "gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
+                  : "bg-gray-400 hover:bg-gray-400 cursor-default"
+              }
             >
               <BarChart3 className="h-5 w-5" />
               {detectingChords ? "Detectando..." : "Detectar Acordes"}
