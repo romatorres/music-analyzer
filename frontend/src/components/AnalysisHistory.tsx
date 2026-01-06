@@ -67,7 +67,7 @@ export default function AnalysisHistory({
   return (
     <div className="glass-card rounded-lg p-4 text-center border-primary/50">
       <div className="flex items-center gap-2 mb-6">
-        <History className="w-6 h-6 text-purple-400" />
+        <History className="w-6 h-6 text-primary" />
         <h2 className="text-xl font-bold">Histórico de Análises</h2>
         <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-sm">
           {history.length}
@@ -87,7 +87,7 @@ export default function AnalysisHistory({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <Music className="w-8 h-8 text-blue-400 group-hover:text-purple-400 transition-colors flex-shrink-0" />
+                <Music className="w-8 h-8 text-primary group-hover:text-purple-400 transition-colors flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p
                     className="font-semibold text-white truncate group-hover:text-purple-300 transition-colors text-left"

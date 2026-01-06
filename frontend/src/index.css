@@ -15,7 +15,7 @@
     --popover: 220 18% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 185 100% 50%;
+    --primary: 136 73.63% 64.31%;
     --primary-foreground: 220 20% 6%;
 
     --secondary: 320 100% 60%;
@@ -32,12 +32,12 @@
 
     --border: 220 15% 20%;
     --input: 220 15% 20%;
-    --ring: 185 100% 50%;
+    --ring: 136 73.63% 64.31%;
 
     --radius: 0.75rem;
 
     /* Custom colors */
-    --cyan: 185 100% 50%;
+    --cyan: 136 73.63% 64.31%;
     --magenta: 320 100% 60%;
     --purple: 270 100% 65%;
     --green: 150 100% 45%;

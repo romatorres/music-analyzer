@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { CornerDownLeft, BarChart3, Music } from "lucide-react";
 import { Button } from "./components/ui/button";
 import type WaveSurfer from "wavesurfer.js";
+import clsx from "clsx";
 
 // Componentes
 import { FileUploader } from "./components/FileUploader";
@@ -221,6 +222,7 @@ export default function MusicAnalyzer() {
         if (loadedFromHistory === filename) {
           resetToInitialView();
         }
+        loadHistory();
       },
       onError: () => {
         setProgress({
@@ -301,6 +303,8 @@ export default function MusicAnalyzer() {
     },
     [stems.length, playAllStems, pauseAllStems]
   );
+
+  const isDisabled = detectingChords || chords.length > 0;
 
   return (
     <div className="min-h-screen bg-background text-white">
@@ -434,14 +438,19 @@ export default function MusicAnalyzer() {
 
             <Button
               onClick={handleDetectChords}
-              disabled={analyzing && chords.length > 0}
+              disabled={isDisabled}
               size="lg"
-              variant="outline"
-              className={
-                analyzing
-                  ? "gap-2 w-full md:w-auto px-10 py-6 text-lg bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 border-purple-500/50 hover:from-purple-500/20 hover:to-purple-600/20"
-                  : "bg-gray-400 hover:bg-gray-400 cursor-default"
-              }
+              variant="default"
+              className={clsx(
+                "gap-2 w-full md:w-auto px-10 py-6 text-lg transition-all duration-200",
+                {
+                  "border-2 border-primary": !isDisabled,
+                },
+                {
+                  "bg-muted text-muted-foreground cursor-default hover:bg-muted hover:text-muted-foreground":
+                    isDisabled,
+                }
+              )}
             >
               <BarChart3 className="h-5 w-5" />
               {detectingChords ? "Detectando..." : "Detectar Acordes"}

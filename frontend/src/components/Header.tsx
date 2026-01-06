@@ -1,22 +1,15 @@
-import { Waves, Settings, HelpCircle } from "lucide-react";
+import { Settings, HelpCircle } from "lucide-react";
 import { Button } from "./ui/button";
 
 export const Header = () => {
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-border/50">
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <Waves className="h-8 w-8 text-primary" />
-          <div className="absolute inset-0 blur-lg bg-primary/30" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-foreground tracking-tight">
-            Audio<span className="text-primary">Lab</span>
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            Análise Musical Profissional
-          </p>
-        </div>
+      <div>
+        <img
+          src="src/assets/logo3.png"
+          alt="Logo da empresa"
+          className="w-28"
+        />
       </div>
 
       <div className="flex items-center gap-2">

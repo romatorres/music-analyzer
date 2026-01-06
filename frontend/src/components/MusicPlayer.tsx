@@ -53,8 +53,8 @@ export function MusicPlayer({
   return (
     <div className="glass-card rounded-lg p-4 text-center neon-border mb-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Music className="w-6 h-6" />
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <Music className="w-6 h-6 text-primary" />
           {loadedFromHistory ? "Análise Carregada" : "Player"}
         </h2>
         {loadedFromHistory && (
