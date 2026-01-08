@@ -7,28 +7,28 @@
 @layer base {
   :root {
     --background: 220 20% 6%;
-    --foreground: 210 40% 98%;
+    --foreground: 117 100% 96%;
 
     --card: 220 18% 10%;
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 117 100% 96%;
 
     --popover: 220 18% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover-foreground: 117 100% 96%;
 
     --primary: 136 73.63% 64.31%;
     --primary-foreground: 220 20% 6%;
 
-    --secondary: 320 100% 60%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 170 85% 55%;
+    --secondary-foreground: 117 100% 96%;
 
     --muted: 220 15% 18%;
     --muted-foreground: 215 20% 55%;
 
-    --accent: 270 100% 65%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 190 95% 60%;
+    --accent-foreground: 220 20% 6%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 117 100% 96%;
 
     --border: 220 15% 20%;
     --input: 220 15% 20%;
@@ -37,33 +37,46 @@
     --radius: 0.75rem;
 
     /* Custom colors */
-    --cyan: 136 73.63% 64.31%;
-    --magenta: 320 100% 60%;
-    --purple: 270 100% 65%;
-    --green: 150 100% 45%;
-    --orange: 30 100% 55%;
-    --yellow: 50 100% 50%;
+    --cyan: 170 85% 55%;
+    --magenta: 136 73.63% 64.31%;
+    --purple: 160 70% 50%;
+    --green: 136 73.63% 64.31%;
+    --orange: 45 95% 60%;
+    --yellow: 55 100% 65%;
+
+    /* Custom Gray Scale with green tint */
+    --gray-50: 150 10% 98%;
+    --gray-100: 150 8% 95%;
+    --gray-200: 150 8% 88%;
+    --gray-300: 150 7% 75%;
+    --gray-400: 150 6% 60%;
+    --gray-500: 150 5% 45%;
+    --gray-600: 150 6% 35%;
+    --gray-700: 150 7% 25%;
+    --gray-800: 150 8% 15%;
+    --gray-900: 150 10% 8%;
+    --gray-950: 150 12% 4%;
 
     /* Gradients */
     --gradient-primary: linear-gradient(
       135deg,
-      hsl(var(--cyan)),
-      hsl(var(--purple))
+      hsl(var(--green)),
+      hsl(var(--cyan))
     );
     --gradient-secondary: linear-gradient(
       135deg,
-      hsl(var(--magenta)),
-      hsl(var(--orange))
+      hsl(var(--green)),
+      hsl(var(--yellow))
     );
     --gradient-glow: radial-gradient(
       ellipse at center,
-      hsl(var(--cyan) / 0.15),
+      hsl(var(--green) / 0.15),
       transparent 70%
     );
 
     /* Shadows */
-    --shadow-glow-cyan: 0 0 30px hsl(var(--cyan) / 0.3);
-    --shadow-glow-magenta: 0 0 30px hsl(var(--magenta) / 0.3);
+    --shadow-glow-cyan: 0 0 30px hsl(var(--green) / 0.3);
+    --shadow-glow-magenta: 0 0 30px hsl(var(--cyan) / 0.3);
     --shadow-card: 0 8px 32px hsl(220 20% 0% / 0.5);
   }
 
@@ -90,8 +103,8 @@
 
 @layer components {
   .glow-text {
-    text-shadow: 0 0 20px hsl(var(--cyan) / 0.5),
-      0 0 40px hsl(var(--cyan) / 0.3);
+    text-shadow: 0 0 20px hsl(var(--green) / 0.5),
+      0 0 40px hsl(var(--green) / 0.3);
   }
 
   .glass-card {
@@ -123,6 +136,111 @@
   .neon-border:hover::before {
     opacity: 1;
   }
+
+  /* Text color utilities */
+  .text-gray-50 {
+    color: hsl(var(--gray-50));
+  }
+  .text-gray-100 {
+    color: hsl(var(--gray-100));
+  }
+  .text-gray-200 {
+    color: hsl(var(--gray-200));
+  }
+  .text-gray-300 {
+    color: hsl(var(--gray-300));
+  }
+  .text-gray-400 {
+    color: hsl(var(--gray-400));
+  }
+  .text-gray-500 {
+    color: hsl(var(--gray-500));
+  }
+  .text-gray-600 {
+    color: hsl(var(--gray-600));
+  }
+  .text-gray-700 {
+    color: hsl(var(--gray-700));
+  }
+  .text-gray-800 {
+    color: hsl(var(--gray-800));
+  }
+  .text-gray-900 {
+    color: hsl(var(--gray-900));
+  }
+  .text-gray-950 {
+    color: hsl(var(--gray-950));
+  }
+
+  /* Background color utilities */
+  .bg-gray-50 {
+    background-color: hsl(var(--gray-50));
+  }
+  .bg-gray-100 {
+    background-color: hsl(var(--gray-100));
+  }
+  .bg-gray-200 {
+    background-color: hsl(var(--gray-200));
+  }
+  .bg-gray-300 {
+    background-color: hsl(var(--gray-300));
+  }
+  .bg-gray-400 {
+    background-color: hsl(var(--gray-400));
+  }
+  .bg-gray-500 {
+    background-color: hsl(var(--gray-500));
+  }
+  .bg-gray-600 {
+    background-color: hsl(var(--gray-600));
+  }
+  .bg-gray-700 {
+    background-color: hsl(var(--gray-700));
+  }
+  .bg-gray-800 {
+    background-color: hsl(var(--gray-800));
+  }
+  .bg-gray-900 {
+    background-color: hsl(var(--gray-900));
+  }
+  .bg-gray-950 {
+    background-color: hsl(var(--gray-950));
+  }
+
+  /* Border color utilities */
+  .border-gray-50 {
+    border-color: hsl(var(--gray-50));
+  }
+  .border-gray-100 {
+    border-color: hsl(var(--gray-100));
+  }
+  .border-gray-200 {
+    border-color: hsl(var(--gray-200));
+  }
+  .border-gray-300 {
+    border-color: hsl(var(--gray-300));
+  }
+  .border-gray-400 {
+    border-color: hsl(var(--gray-400));
+  }
+  .border-gray-500 {
+    border-color: hsl(var(--gray-500));
+  }
+  .border-gray-600 {
+    border-color: hsl(var(--gray-600));
+  }
+  .border-gray-700 {
+    border-color: hsl(var(--gray-700));
+  }
+  .border-gray-800 {
+    border-color: hsl(var(--gray-800));
+  }
+  .border-gray-900 {
+    border-color: hsl(var(--gray-900));
+  }
+  .border-gray-950 {
+    border-color: hsl(var(--gray-950));
+  }
 }
 
 @layer utilities {
@@ -133,10 +251,10 @@
   @keyframes pulse-glow {
     0%,
     100% {
-      box-shadow: 0 0 20px hsl(var(--cyan) / 0.3);
+      box-shadow: 0 0 20px hsl(var(--green) / 0.3);
     }
     50% {
-      box-shadow: 0 0 40px hsl(var(--cyan) / 0.5);
+      box-shadow: 0 0 40px hsl(var(--green) / 0.5);
     }
   }
 
