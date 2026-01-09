@@ -50,7 +50,7 @@ export const FileUploader = ({
             <p className="text-lg font-semibold text-foreground">
               {selectedFile.name}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-400">
               {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
             </p>
           </div>
@@ -104,17 +104,17 @@ export const FileUploader = ({
           <h3 className="text-lg font-semibold text-foreground mb-1">
             {isLoading ? "Carregando..." : "Arraste seu arquivo de áudio"}
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-400">
             ou clique para selecionar • MP3, WAV, FLAC, OGG
           </p>
         </div>
 
         <div className="flex items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-gray-400">
             <Music className="h-4 w-4" />
             <span>Separação de stems</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-gray-400">
             <FileAudio className="h-4 w-4" />
             <span>Detecção de acordes</span>
           </div>
@@ -123,4 +123,3 @@ export const FileUploader = ({
     </div>
   );
 };
-

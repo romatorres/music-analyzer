@@ -57,7 +57,7 @@ export default function AnalysisHistory({
 
   if (history.length === 0) {
     return (
-      <div className="glass-card rounded-lg p-4 text-center neon-bordertext-center">
+      <div className="glass-card p-4 text-center">
         <History className="w-12 h-12 mx-auto mb-4 text-gray-400" />
         <p className="text-gray-400">Nenhuma análise realizada ainda</p>
       </div>
@@ -65,13 +65,13 @@ export default function AnalysisHistory({
   }
 
   return (
-    <div className="glass-card rounded-lg p-4 text-center border-primary/50">
+    <div className="glass-card p-4">
       <div className="flex items-center gap-2 mb-6">
         <History className="w-6 h-6 text-primary" />
-        <h2 className="text-xl font-bold">Histórico de Análises</h2>
-        <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full text-sm">
-          {history.length}
-        </span>
+        <h2 className="text-xl font-bold text-foreground">
+          Histórico de Análises
+        </h2>
+        <span className="badge-primary font-semibold">{history.length}</span>
       </div>
 
       <p className="text-sm text-gray-400 mb-4">
@@ -83,7 +83,7 @@ export default function AnalysisHistory({
           <div
             key={index}
             onClick={() => onSelectFile?.(item.filename)}
-            className="glass-card rounded-lg p-4 text-center neon-border transition-all cursor-pointer group hover:border-purple-400/50"
+            className="glass-card-hover p-4 group"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -125,7 +125,7 @@ export default function AnalysisHistory({
                     title="Deletar análise e arquivos"
                   >
                     {deletingFile === item.filename ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-400"></div>
+                      <div className="spinner-destructive h-5 w-5"></div>
                     ) : (
                       <Trash2 className="w-5 h-5 text-destructive" />
                     )}

@@ -322,7 +322,7 @@ export default function MusicAnalyzer() {
             Análise Musical com{" "}
             <span className="text-primary glow-text">IA</span>
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-gray-400">
             Separe instrumentos, detecte acordes e analise qualquer música
           </p>
         </div>
@@ -417,8 +417,8 @@ export default function MusicAnalyzer() {
         )}
 
         {showPlayerView && (
-          <div className="glass-card rounded-lg p-6 text-center border-primary/50 mt-8">
-            <div className="mb-4 flex items-center gap-2">
+          <div className="glass-card p-6 mt-8">
+            <div className="mb-6 flex items-center gap-2">
               <span className="text-primary">
                 <Music />
               </span>
@@ -435,26 +435,27 @@ export default function MusicAnalyzer() {
                 <ChordSlider chords={chords} currentTime={currentTime} />
               </div>
             )}
-
-            <Button
-              onClick={handleDetectChords}
-              disabled={isDisabled}
-              size="lg"
-              variant="default"
-              className={clsx(
-                "gap-2 w-full md:w-auto px-10 py-6 text-lg transition-all duration-200",
-                {
-                  "border-2 border-primary": !isDisabled,
-                },
-                {
-                  "bg-muted text-muted-foreground cursor-default hover:bg-muted hover:text-muted-foreground":
-                    isDisabled,
-                }
-              )}
-            >
-              <BarChart3 className="h-5 w-5" />
-              {detectingChords ? "Detectando..." : "Detectar Acordes"}
-            </Button>
+            <div className="flex justify-center">
+              <Button
+                onClick={handleDetectChords}
+                disabled={isDisabled}
+                size="lg"
+                variant="default"
+                className={clsx(
+                  "gap-2 w-full md:w-auto px-10 py-6 text-lg transition-all duration-200",
+                  {
+                    "border-2 border-primary": !isDisabled,
+                  },
+                  {
+                    "bg-muted text-muted-foreground cursor-default hover:bg-muted hover:text-muted-foreground":
+                      isDisabled,
+                  }
+                )}
+              >
+                <BarChart3 className="h-5 w-5" />
+                {detectingChords ? "Detectando..." : "Detectar Acordes"}
+              </Button>
+            </div>
           </div>
         )}
       </div>

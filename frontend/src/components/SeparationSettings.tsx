@@ -85,7 +85,7 @@ export const SeparationSettings: React.FC<SeparationSettingsProps> = ({
   disabled,
 }) => {
   return (
-    <div className="glass-card rounded-xl border-primary/20 w-full p-6 space-y-6">
+    <div className="glass-card w-full p-6 space-y-6">
       <div className="flex items-center gap-3">
         <Settings className="w-6 h-6 text-primary" />
         <h3 className="text-xl font-bold text-foreground">
@@ -126,7 +126,7 @@ export const SeparationSettings: React.FC<SeparationSettingsProps> = ({
               </div>
               <p className="text-xs text-gray-400 mt-2">{opt.info}</p>
               {stemsMode === opt.id && (
-                <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary" />
+                <div className="absolute top-2 right-2 indicator-dot-primary" />
               )}
             </button>
           ))}
@@ -164,7 +164,7 @@ export const SeparationSettings: React.FC<SeparationSettingsProps> = ({
                 `}
               >
                 {q.id === "intermediate" && (
-                  <div className="absolute -top-3 right-8 bg-primary text-background text-xs px-2 py-1 rounded-full font-medium z-10">
+                  <div className="absolute -top-3 right-8 badge-primary !bg-primary !text-background font-medium z-10">
                     Recomendado
                   </div>
                 )}
@@ -188,7 +188,7 @@ export const SeparationSettings: React.FC<SeparationSettingsProps> = ({
                 </div>
                 <p className="mt-2 text-xs text-gray-400">{q.description}</p>
                 {isSelected && (
-                  <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary" />
+                  <div className="absolute top-2 right-2 indicator-dot-primary" />
                 )}
               </button>
             );

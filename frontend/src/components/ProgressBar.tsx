@@ -16,7 +16,7 @@ export default function ProgressBar({
   totalSteps,
 }: ProgressBarProps) {
   return (
-    <div className="glass-card rounded-lg p-4 text-center neon-border mb-8">
+    <div className="glass-card p-4 mb-8">
       <div className="flex items-center gap-3 mb-4">
         <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
         <h3 className="text-lg font-semibold">Processando...</h3>

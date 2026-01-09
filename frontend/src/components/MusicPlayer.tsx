@@ -51,14 +51,14 @@ export function MusicPlayer({
   if (!file && !loadedFromHistory) return null;
 
   return (
-    <div className="glass-card rounded-lg p-4 text-center neon-border mb-8">
+    <div className="glass-card p-4 mb-8">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <Music className="w-6 h-6 text-primary" />
           {loadedFromHistory ? "Análise Carregada" : "Player"}
         </h2>
         {loadedFromHistory && (
-          <div className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+          <div className="badge-secondary flex items-center gap-2">
             <History className="w-4 h-4" />
             Do Histórico
           </div>
@@ -103,7 +103,7 @@ export function MusicPlayer({
 
         {!audioLoaded && (
           <div className="text-center text-sm text-yellow-400 mb-4 flex items-center justify-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
+            <div className="spinner-primary h-4 w-4"></div>
             Carregando áudio...
           </div>
         )}

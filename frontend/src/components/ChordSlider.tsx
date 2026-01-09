@@ -45,10 +45,10 @@ export default function ChordSlider({ chords, currentTime }: ChordSliderProps) {
     "bg-primary/20 border border-primary shadow-xl shadow-purple-500/50 opacity-100";
 
   return (
-    <div className="glass-card rounded-lg p-4 text-center neon-border mb-8">
+    <div className="glass-card p-4 mb-8">
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
+        <div className="indicator-dot-primary"></div>
         <h3 className="text-sm font-semibold text-purple-300">Acordes</h3>
         <span className="text-xs text-gray-500">
           {currentChordIndex >= 0
@@ -86,7 +86,7 @@ export default function ChordSlider({ chords, currentTime }: ChordSliderProps) {
               </p>
 
               {isActive && (
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
+                <div className="absolute -top-1 -right-1 indicator-dot-active" />
               )}
             </div>
           );

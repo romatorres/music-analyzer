@@ -250,7 +250,7 @@ export const WaveformVisualizer = forwardRef<
       <div className="relative w-full h-40">
         <div
           ref={containerRef}
-          className="w-full glass-card rounded-lg p-4 text-center neon-border overflow-hidden cursor-pointer hover:opacity-90 transition-opacity duration-200"
+          className="w-full glass-card p-4 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity duration-200"
           style={{ minHeight: "120px" }}
           title="Clique para navegar na música"
         />
@@ -266,7 +266,7 @@ export const WaveformVisualizer = forwardRef<
         {!isReady && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-800/50 rounded-lg">
             <div className="flex flex-col items-center gap-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+              <div className="spinner-primary h-8 w-8"></div>
               <p className="text-xs text-gray-400">Carregando waveform...</p>
             </div>
           </div>

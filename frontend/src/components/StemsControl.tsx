@@ -73,7 +73,7 @@ export function StemsControl({
   if (stems.length === 0) return null;
 
   return (
-    <div className="glass-card rounded-lg p-6 text-center border-primary/50 mt-8">
+    <div className="glass-card p-6 mt-8">
       <h2 className="text-2xl font-bold mb-6 flex items-center justify-center gap-2">
         <Disc className="w-6 h-6" />
         Controle de Instrumentos
