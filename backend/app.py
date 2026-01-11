@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os
 import subprocess
 import librosa
+import soundfile as sf
 from pathlib import Path
 import time
 import json
@@ -836,6 +837,113 @@ def detect_chords():
             'task_id': task_id
         }), 500
 
+# ==================== PROCESSAMENTO DE ÁUDIO (PITCH/VELOCIDADE) ====================
+
+@app.route('/api/process-audio', methods=['POST'])
+def process_audio():
+    """
+    Processa áudio com pitch shift e/ou time stretch
+    
+    Aceita dois formatos:
+    1. JSON com filename (arquivo já no servidor)
+    2. FormData com arquivo de áudio
+    """
+    try:
+        # Verificar se é FormData (arquivo enviado)
+        if request.files and 'audio' in request.files:
+            # FormData: arquivo enviado do histórico
+            audio_file = request.files['audio']
+            pitch_shift_semitones = float(request.form.get('pitch_shift', 0))
+            time_stretch_rate = float(request.form.get('time_stretch', 1.0))
+            
+            # Salvar temporariamente
+            temp_filename = f'temp_{int(time.time() * 1000)}_{audio_file.filename}'
+            temp_path = os.path.join(UPLOAD_FOLDER, temp_filename)
+            audio_file.save(temp_path)
+            
+            audio_path = temp_path
+            filename = audio_file.filename
+            is_temp = True
+        else:
+            # JSON: arquivo já está no servidor
+            data = request.json
+            filename = data.get('filename')
+            pitch_shift_semitones = float(data.get('pitch_shift', 0))
+            time_stretch_rate = float(data.get('time_stretch', 1.0))
+            
+            if not filename:
+                return jsonify({'error': 'Filename não fornecido'}), 400
+            
+            audio_path = os.path.join(UPLOAD_FOLDER, filename)
+            is_temp = False
+        
+        print(f"\n=== PROCESSAMENTO DE ÁUDIO ===")
+        print(f"Arquivo: {filename}")
+        print(f"Pitch: {pitch_shift_semitones:+.0f} semitons")
+        print(f"Velocidade: {time_stretch_rate:.2f}x")
+        
+        # Verificar se precisa processar
+        if pitch_shift_semitones == 0 and time_stretch_rate == 1.0:
+            print("✓ Sem alterações necessárias")
+            return jsonify({'error': 'Nenhuma alteração solicitada'}), 400
+        
+        if not os.path.exists(audio_path):
+            print(f"❌ Arquivo não encontrado: {audio_path}")
+            return jsonify({'error': 'Arquivo não encontrado'}), 404
+        
+        print(f"[30%] Carregando áudio...")
+        # Manter sample rate original para preservar qualidade
+        y, sr = librosa.load(audio_path, sr=None)
+        print(f"✓ Carregado: {len(y)/sr:.1f}s @ {sr}Hz")
+        
+        # Aplicar pitch shift
+        if pitch_shift_semitones != 0:
+            print(f"[50%] Aplicando pitch shift ({pitch_shift_semitones:+.0f} semitons)...")
+            y = librosa.effects.pitch_shift(y, sr=sr, n_steps=pitch_shift_semitones)
+            print(f"✓ Pitch shift aplicado")
+        
+        # Aplicar time stretch
+        if time_stretch_rate != 1.0:
+            print(f"[70%] Aplicando time stretch ({time_stretch_rate:.2f}x)...")
+            y = librosa.effects.time_stretch(y, rate=time_stretch_rate)
+            print(f"✓ Time stretch aplicado")
+        
+        # Salvar temporariamente
+        print(f"[90%] Salvando áudio processado...")
+        output_filename = f'processed_{int(time.time() * 1000)}_{filename}'
+        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+        
+        # Garantir que a pasta existe
+        os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+        
+        sf.write(output_path, y, sr, format='WAV')
+        
+        # Verificar se arquivo foi criado
+        if not os.path.exists(output_path):
+            print(f"❌ ERRO: Arquivo não foi criado!")
+            return jsonify({'error': 'Erro ao salvar arquivo processado'}), 500
+        
+        print(f"[100%] Processamento concluído!")
+        print("=" * 40)
+        
+        # Usar caminho absoluto para send_file
+        abs_output_path = os.path.abspath(output_path)
+        
+        # Limpar arquivo temporário se foi enviado
+        if is_temp and os.path.exists(audio_path):
+            try:
+                os.remove(audio_path)
+            except:
+                pass
+        
+        return send_file(abs_output_path, mimetype='audio/wav', as_attachment=False)
+        
+    except Exception as e:
+        print(f"❌ Erro no processamento: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 # ==================== DOWNLOAD ====================
 
 @app.route('/api/download/<model>/<song>/<stem>', methods=['GET'])
@@ -891,6 +999,7 @@ if __name__ == '__main__':
     print("   GET  /api/quality-info  - Info sobre qualidades")
     print("   POST /api/separate      - Separar stems")
     print("   POST /api/chords        - Detectar acordes")
+    print("   POST /api/process-audio - Pitch shift e velocidade")
     print("   GET  /api/progress/:id  - Progresso de tarefa")
     print("=" * 70)
     print(f"\n🚀 Servidor: http://localhost:5000\n")

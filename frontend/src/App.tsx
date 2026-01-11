@@ -15,11 +15,13 @@ import { Header } from "./components/Header";
 import { MusicPlayer } from "./components/MusicPlayer";
 import { SeparationSettings } from "./components/SeparationSettings";
 import { StemsControl } from "./components/StemsControl";
+import { AudioControls } from "./components/AudioControls";
 
 // Hooks
 import { useAudioManager } from "./hooks/useAudioManager";
 import { useAnalysis } from "./hooks/useAnalysis";
 import { useHistory } from "./hooks/useHistory";
+import { useAudioEffects } from "./hooks/useAudioEffects";
 
 // Types
 import type { Stem, Chord, StemVolumes, MutedStems, SoloStems } from "./types";
@@ -90,10 +92,129 @@ export default function MusicAnalyzer() {
   const { history, loadHistory, loadAnalysisFromHistory, deleteAnalysis } =
     useHistory(API_URL);
 
+  // Hook de efeitos de áudio (backend-based)
+  const {
+    playbackRate,
+    pitchShift,
+    isProcessing: isProcessingAudio,
+    processedAudioUrl,
+    setPlaybackRate,
+    setPitchShift,
+    processAudioDebounced,
+  } = useAudioEffects(API_URL);
+
   // Carregar histórico ao inicializar
   useEffect(() => {
     loadHistory();
   }, [loadHistory]);
+
+  // Atualizar velocidade do WaveSurfer (apenas velocidade, pitch é no backend)
+  useEffect(() => {
+    if (wavesurferRef.current) {
+      // Velocidade funciona nativamente no WaveSurfer
+      wavesurferRef.current.setPlaybackRate(playbackRate);
+    }
+  }, [playbackRate]);
+
+  // Atualizar velocidade dos stems
+  useEffect(() => {
+    Object.values(audioRefs.current).forEach((audio) => {
+      if (audio) {
+        audio.playbackRate = playbackRate;
+      }
+    });
+  }, [playbackRate, audioRefs]);
+
+  // Processar áudio quando PITCH mudar (velocidade é nativa do WaveSurfer)
+  useEffect(() => {
+    // Só processar pitch se houver arquivo carregado (novo ou do histórico)
+    if (!file && !loadedFromHistory) {
+      return;
+    }
+
+    // Se pitch é 0, voltar ao áudio original
+    if (pitchShift === 0) {
+      console.log("[App] Pitch = 0, voltando ao áudio original");
+      
+      if (processedAudioUrl) {
+        URL.revokeObjectURL(processedAudioUrl);
+      }
+      
+      // Voltar ao áudio original
+      if (file) {
+        const originalUrl = URL.createObjectURL(file);
+        setAudioUrlForVisualizer(originalUrl);
+      } else if (loadedFromHistory) {
+        // Para histórico, recarregar do servidor
+        const historyUrl = `${API_URL}/uploads/${encodeURIComponent(loadedFromHistory)}`;
+        setAudioUrlForVisualizer(historyUrl);
+      }
+      
+      return;
+    }
+
+    // IMPORTANTE: Priorizar histórico sobre file
+    // Se loadedFromHistory existe, sempre usar a URL (mesmo que file exista)
+    if (loadedFromHistory && audioUrlForVisualizer) {
+      // Para arquivos do histórico, enviar a URL do áudio
+      processAudioDebounced(loadedFromHistory, pitchShift, playbackRate, audioUrlForVisualizer);
+    } else if (file) {
+      // Arquivo novo carregado - enviar o File object
+      processAudioDebounced(file.name, pitchShift, playbackRate, undefined, file);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pitchShift, file, loadedFromHistory]); // Removido playbackRate das dependências!
+
+  // Atualizar URL do visualizador quando áudio processado estiver pronto
+  useEffect(() => {
+    if (processedAudioUrl) {
+      console.log("[App] Áudio processado pronto, atualizando visualizador");
+      
+      // Resetar player para carregar novo áudio
+      if (wavesurferRef.current) {
+        const wasPlaying = wavesurferRef.current.isPlaying();
+        const currentTimeBeforeLoad = wavesurferRef.current.getCurrentTime();
+        const durationBeforeLoad = wavesurferRef.current.getDuration();
+        
+        console.log(`[App] Estado antes de carregar: playing=${wasPlaying}, time=${currentTimeBeforeLoad.toFixed(2)}s`);
+        
+        // Recarregar com novo áudio
+        wavesurferRef.current.load(processedAudioUrl);
+        
+        // Restaurar posição e estado de reprodução
+        wavesurferRef.current.once('ready', () => {
+          if (wavesurferRef.current) {
+            
+            
+            // Calcular posição relativa (0-1)
+            const relativePosition = durationBeforeLoad > 0 
+              ? currentTimeBeforeLoad / durationBeforeLoad 
+              : 0;
+            
+            console.log(`[App] Restaurando: position=${relativePosition.toFixed(3)}, wasPlaying=${wasPlaying}`);
+            
+            // Restaurar posição
+            if (relativePosition > 0 && relativePosition < 1) {
+              wavesurferRef.current.seekTo(relativePosition);
+            }
+            
+            // Restaurar reprodução
+            if (wasPlaying) {
+              console.log("[App] Retomando reprodução...");
+              wavesurferRef.current.play();
+              setPlaying(true);
+            }
+          }
+        });
+      }
+      
+      setAudioUrlForVisualizer(processedAudioUrl);
+    } else if (file && !loadedFromHistory) {
+      // Voltar para áudio original apenas se for arquivo novo
+      const originalUrl = URL.createObjectURL(file);
+      setAudioUrlForVisualizer(originalUrl);
+    }
+  }, [processedAudioUrl, file, loadedFromHistory]);
 
   // Handlers de arquivo
   const handleFileSelect = (selectedFile: File | null) => {
@@ -316,7 +437,7 @@ export default function MusicAnalyzer() {
 
       <Header />
 
-      <div className="max-w-7xl mx-auto my-14">
+      <div className="max-w-7xl mx-auto my-14 px-3">
         <div className="text-center my-8">
           <h2 className="text-3xl font-bold text-foreground mb-3">
             Análise Musical com{" "}
@@ -385,6 +506,17 @@ export default function MusicAnalyzer() {
               onMasterVolumeChange={handleMasterVolumeChange}
               onMasterMuteToggle={handleMasterMuteToggle}
             />
+
+            {/* Controles de Velocidade e Tonalidade - Disponível desde o carregamento */}
+            {showPlayerView && (
+              <AudioControls
+                playbackRate={playbackRate}
+                pitchShift={pitchShift}
+                onPlaybackRateChange={setPlaybackRate}
+                onPitchShiftChange={setPitchShift}
+                isProcessing={isProcessingAudio}
+              />
+            )}
 
             {file && !loadedFromHistory && stems.length === 0 && (
               <div className="flex flex-col items-center gap-6 my-8">

@@ -14,6 +14,14 @@ Esta pasta contém documentação técnica detalhada sobre otimizações e confi
   - Interface do usuário
   - Troubleshooting específico
 
+### Controles de Áudio
+
+- **[PITCH_VELOCIDADE.md](./PITCH_VELOCIDADE.md)** - Controles de velocidade e tonalidade (NOVO!)
+  - Velocidade: 0.5x a 2.0x (instantâneo)
+  - Tonalidade: -12 a +12 semitons (backend)
+  - Independente de separação de stems
+  - Casos de uso e troubleshooting
+
 ### Performance e Otimizações
 
 - **[OTIMIZACOES.md](./OTIMIZACOES.md)** - Detalhes sobre as otimizações implementadas no Demucs
@@ -49,11 +57,17 @@ Esta pasta contém documentação técnica detalhada sobre otimizações e confi
 
 ## 📊 Resumo Executivo
 
-### Modos de Qualidade (NOVO!)
+### Modos de Qualidade
 
 - ⚡ **Rápido**: 1-3 min, Qualidade Boa (8.5/10), ~10MB
 - ⚖️ **Balanceado**: 5-8 min, Qualidade Ótima (9.0/10), ~10MB (Recomendado)
 - 🎵 **Qualidade**: 15-20 min, Qualidade Perfeita (9.5/10), ~40MB
+
+### Controles de Áudio (NOVO!)
+
+- 🎚️ **Velocidade**: 0.5x a 2.0x (instantâneo, nativo)
+- 🎵 **Tonalidade**: -12 a +12 semitons (backend, 2-5s)
+- ✅ **Independente**: Funciona sem separar stems
 
 ### Otimizações Implementadas
 

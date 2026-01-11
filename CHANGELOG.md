@@ -4,6 +4,51 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
 ---
 
+## [2.1.0] - 2026-01-10 🎵 CONTROLES DE ÁUDIO
+
+### ✨ Adicionado
+
+#### 🎚️ Controles de Velocidade e Tonalidade
+- **Velocidade**: 0.5x a 2.0x (instantâneo, nativo do WaveSurfer)
+- **Tonalidade (Pitch Shift)**: -12 a +12 semitons (processado no backend)
+- Funcionam **independentemente** da separação de stems
+- Disponíveis desde o carregamento da música
+
+#### 🔧 Backend
+- Novo endpoint `/api/process-audio` para processamento de áudio
+- Usa `librosa.effects.pitch_shift()` para alteração de tom
+- Usa `librosa.effects.time_stretch()` para alteração de velocidade
+- Retorna áudio processado em WAV de alta qualidade
+- Logs detalhados do processamento
+
+#### 🎨 Interface
+- Componente `AudioControls` com sliders responsivos
+- Indicador "Processando..." durante processamento
+- Botão "Resetar" para valores padrão
+- Valores exibidos em tempo real
+- Debounce de 500ms para pitch shift
+
+#### 📚 Documentação
+- `docs/PITCH_VELOCIDADE.md`: Guia completo da implementação
+
+### 🔄 Modificado
+- `useAudioEffects`: Reescrito para usar backend (removido Tone.js)
+- `App.tsx`: Integração com backend, removido ~150 linhas de código Tone.js
+- `AudioControls.tsx`: Adicionado indicador de processamento
+
+### 🗑️ Removido
+- Pacote `tone` (~200KB) e 4 dependências relacionadas
+- Código Tone.js que não funcionava (Web Audio API)
+- Tentativas de conexão MediaElementSource
+
+### 📖 Casos de Uso
+- Praticar instrumento (velocidade 0.5x-0.75x)
+- Cantar em tom diferente (tonalidade -3 a +3)
+- Acelerar áudio (velocidade 1.25x-1.5x)
+- Transpor música (tonalidade -12 a +12)
+
+---
+
 ## [2.0.0] - 2026-01-03 🎉 MAJOR UPGRADE
 
 ### ✨ Adicionado

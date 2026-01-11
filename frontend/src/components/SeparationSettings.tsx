@@ -98,7 +98,7 @@ export const SeparationSettings: React.FC<SeparationSettingsProps> = ({
         <label className="block text-base font-medium text-gray-300">
           Modo de Separação (Stems)
         </label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 md:gap-3 gap-4">
           {stemsOptions.map((opt) => (
             <button
               key={opt.id}
@@ -138,7 +138,7 @@ export const SeparationSettings: React.FC<SeparationSettingsProps> = ({
         <label className="block text-base font-medium text-gray-300">
           Qualidade de Processamento
         </label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 md:gap-3 gap-4">
           {qualityOptions.map((q) => {
             const Icon = q.icon;
             const isSelected = quality === q.id;

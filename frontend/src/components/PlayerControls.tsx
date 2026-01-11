@@ -34,32 +34,33 @@ export function PlayerControls({
   };
 
   return (
-    <div className="flex items-center justify-between gap-6 px-4 py-3">
-      <div className="font-mono text-sm text-muted-foreground min-w-[100px]">
+    <div className="flex items-center justify-between sm:gap-4 gap-2 sm:px-4 px-2 py-3">
+      <div className="flex font-mono text-sm text-muted-foreground">
         <span className="text-primary">{formatTime(currentTime)}</span>
         <span> / </span>
         <span>{formatTime(duration)}</span>
       </div>
+      <div>
+        <Button
+          onClick={onTogglePlayPause}
+          disabled={!audioLoaded}
+          size="icon"
+          className={cn(
+            "h-12 w-12 rounded-full transition-all duration-300",
+            "bg-gradient-to-br from-primary to-accent",
+            "hover:shadow-[0_0_30px_hsl(var(--primary)/0.5)]",
+            "hover:scale-105"
+          )}
+        >
+          {playing ? (
+            <Pause className="h-6 w-6 text-primary-foreground" />
+          ) : (
+            <Play className="h-6 w-6 text-primary-foreground ml-0.5" />
+          )}
+        </Button>
+      </div>
 
-      <Button
-        onClick={onTogglePlayPause}
-        disabled={!audioLoaded}
-        size="icon"
-        className={cn(
-          "h-12 w-12 rounded-full transition-all duration-300",
-          "bg-gradient-to-br from-primary to-accent",
-          "hover:shadow-[0_0_30px_hsl(var(--primary)/0.5)]",
-          "hover:scale-105"
-        )}
-      >
-        {playing ? (
-          <Pause className="h-6 w-6 text-primary-foreground" />
-        ) : (
-          <Play className="h-6 w-6 text-primary-foreground ml-0.5" />
-        )}
-      </Button>
-
-      <div className="flex items-center gap-3 min-w-[150px]">
+      <div className="flex items-center sm:gap-3 gap-1">
         <Button
           variant="ghost"
           size="icon"
